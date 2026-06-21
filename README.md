@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Knowledge Search Engine
 
-## Getting Started
+An AI-powered "Second Brain" to ingest, index, and query your personalized documents. Upload notes, articles, and PDFs, and search them instantly using high-dimensional vector representations and semantic search, or hold context-reinforced conversations with your knowledge database.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Key Features
+
+- 📂 **PDF & Document Upload**: Ingest and structure documents, research papers, notes, and text.
+- 🔍 **Semantic Search**: Natural language similarity search to retrieve concepts and answers by meaning.
+- 💬 **AI Assistant Chat**: Natural dialogue with an AI assistant contextualized on your uploaded files.
+- 📍 **Source Citations**: Inline citations pointing directly to specific pages and paragraphs in the source files.
+- 📊 **Vector Embeddings**: Text chunk representation in high-dimensional vector spaces.
+- 🕸️ **Knowledge Retrieval**: Unified, graph-like retrieval of notes and highlights for swift semantic parsing.
+
+---
+
+## Technology Stack
+
+- **Framework**: Next.js 15 (App Router, Turbopack)
+- **Styling**: Tailwind CSS v4 (Glassmorphic modules, custom @theme configuration)
+- **Database**: PostgreSQL (Structured application data)
+- **ORM**: Prisma ORM (Type-safe schemas and query generation)
+- **Vector Database**: pgvector (Vector search and indexing)
+- **AI / LLM Integration**: OpenAI GPT / Google Gemini API (Embeddings & text generation)
+- **Language**: TypeScript (Strict Mode)
+
+---
+
+## Folder Structure
+
+```text
+src/
+ ├── app/                  # App Router components, styles, layouts, metadata
+ ├── components/           # UI Elements & layouts
+ │    ├── ui/              # Reusable atomic UI (Buttons, cards, etc.)
+ │    ├── layout/          # Global layouts (Navbar, Footer, Container)
+ │    └── shared/          # Project specific shared modules
+ ├── hooks/                # Custom React hooks
+ ├── lib/                  # Third-party configurations & clients (Prisma, OpenAI, etc.)
+ ├── services/             # Service integration logic
+ ├── utils/                # Utility & helper functions
+ ├── types/                # Strict TypeScript declaration types
+ ├── constants/            # Navigation items, configuration constants
+ └── styles/               # Styling configurations
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Setup & Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- Node.js >= 18.17
+- npm or yarn
 
-To learn more about Next.js, take a look at the following resources:
+### Installation Steps
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the repository** (or navigate to workspace directory):
+   ```bash
+   cd /Users/madhavpratapsingh/Desktop/project_1
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-## Deploy on Vercel
+3. **Start the development server (with Turbopack)**:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. **Build the production bundle**:
+   ```bash
+   npm run build
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Future Roadmap
+
+### 📅 Day 1: Project Architecture & UI (Current)
+- Establish Next.js 15 App router structure.
+- Configure Tailwind CSS v4 styling tokens and custom glassmorphism.
+- Set up SEO metadata and baseline layout (Container, Navbar, Footer, Button).
+- Deploy clean, modern landing page UI.
+
+### 📅 Day 2: Parsing & Database Integration
+- Configure Prisma ORM with PostgreSQL database.
+- Build API endpoints for files & PDF uploads.
+- Build parsing workers to extract clean markdown/text layout from files.
+
+### 📅 Day 3: Embedding Computation & AI Chat
+- Configure pgvector schemas for chunks.
+- Connect Google Gemini / OpenAI embeddings endpoint.
+- Develop vector query pipeline with cosine similarity.
+- Implement streaming RAG Chat interface with citation highlighting.
+# personal-knowledge-search
