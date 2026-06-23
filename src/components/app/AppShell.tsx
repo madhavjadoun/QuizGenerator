@@ -5,8 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { LottieRefCurrentProps } from "lottie-react";
-import menuAnimation from "../../../public/menu.json";
+import menuAnimation from "../../../public/menu2.json";
 import BlurText from "@/components/ui/BlurText";
+import { supabase } from "@/lib/supabase";
+import OrbitLoader from "@/components/app/OrbitLoader";
 
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
@@ -25,14 +27,14 @@ function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => vo
 
     if (isOpen !== prevIsOpen.current) {
       if (isOpen) {
-        lottieRef.current.playSegments([0, 48], true);
+        lottieRef.current.playSegments([0, 62], true);
       } else {
-        lottieRef.current.playSegments([141, 193], true);
+        lottieRef.current.playSegments([62, 124], true);
       }
       prevIsOpen.current = isOpen;
     } else {
       if (isOpen) {
-        lottieRef.current.goToAndStop(48, true);
+        lottieRef.current.goToAndStop(62, true);
       } else {
         lottieRef.current.goToAndStop(0, true);
       }
@@ -44,10 +46,10 @@ function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => vo
       <button
         onClick={onClick}
         className="p-1 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center flex-shrink-0"
-        style={{ width: "32px", height: "32px", color: "var(--text-2)" }}
+        style={{ width: "36px", height: "36px", color: "var(--text-2)" }}
         aria-label="Toggle sidebar"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
         </svg>
       </button>
@@ -58,10 +60,10 @@ function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => vo
     <button
       onClick={onClick}
       className="p-1 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 flex items-center justify-center flex-shrink-0 lottie-menu-btn"
-      style={{ width: "32px", height: "32px" }}
+      style={{ width: "36px", height: "36px" }}
       aria-label="Toggle sidebar"
     >
-      <div className="w-5 h-5 flex items-center justify-center">
+      <div className="w-6.5 h-6.5 flex items-center justify-center">
         <Lottie
           lottieRef={lottieRef}
           animationData={menuAnimation}
@@ -118,6 +120,64 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [docCount, setDocCount] = useState<number | null>(null);
+  const [storageUsed, setStorageUsed] = useState<number>(0);
+
+  // Supabase Auth states
+  const [user, setUser] = useState<import("@supabase/supabase-js").User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkUser = async () => {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        if (mounted) router.push("/login");
+      } else {
+        if (mounted) {
+          setUser(currentUser);
+          setUserLoading(false);
+        }
+      }
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        router.push("/login");
+      } else if (session?.user) {
+        setUser(session.user);
+        setUserLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("documents")
+          .select("file_size");
+        if (!error && data) {
+          setDocCount(data.length);
+          const total = data.reduce((acc: number, d: { file_size: number }) => acc + (d.file_size || 0), 0);
+          setStorageUsed(total);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch sidebar counts:", e);
+      }
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
@@ -154,6 +214,15 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
     document.documentElement.classList.toggle("dark", !isDark);
     localStorage.setItem("theme", isDark ? "light" : "dark");
     setTheme(isDark ? "light" : "dark");
+  };
+
+  const userEmail = user?.email || "";
+  const userName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const userInitials = userName.slice(0, 2).toUpperCase();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   /* ── Sidebar content ── */
@@ -214,28 +283,53 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
       </nav>
 
       {/* Bottom section */}
-      <div style={{ borderTop: "1px solid var(--border)" }} className="p-2.5 space-y-2">
-        {/* pgvector status */}
+      <div style={{ borderTop: "1px solid var(--border)" }} className="p-3.5 space-y-3">
+        {/* Knowledge Base Status Card */}
         <div
-          className="flex items-center justify-between px-2.5 py-2 rounded-lg"
+          className="p-3 rounded-lg space-y-2.5"
           style={{
-            background: "rgba(6,182,212,0.05)",
-            border: "1px solid rgba(6,182,212,0.12)",
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
           }}
         >
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3 h-3" style={{ color: "var(--cyan)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
-            </svg>
-            <span className="text-[10px] font-medium" style={{ color: "var(--text-2)" }}>pgvector</span>
-          </div>
-          <span className="flex items-center gap-1 text-[9px] font-semibold" style={{ color: "#059669" }}>
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Knowledge Base</span>
+            <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-600 dark:text-emerald-500">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              </span>
+              Active
             </span>
-            Active
-          </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+              <span>Documents</span>
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{docCount !== null ? docCount : "..."}</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
+              <span>Storage</span>
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                {(() => {
+                  if (storageUsed === 0) return "0 Bytes";
+                  const k = 1024;
+                  const sizes = ["Bytes", "KB", "MB", "GB"];
+                  const i = Math.floor(Math.log(storageUsed) / Math.log(k));
+                  return parseFloat((storageUsed / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+                })()} / 100 MB
+              </span>
+            </div>
+          </div>
+
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-3)" }}>
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${Math.min(Math.round((storageUsed / (100 * 1024 * 1024)) * 100), 100)}%`,
+                background: "var(--indigo)",
+              }}
+            />
+          </div>
         </div>
 
         {/* User row */}
@@ -245,22 +339,19 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
               style={{ background: "linear-gradient(135deg, var(--indigo), var(--violet))" }}
             >
-              JD
+              {userInitials}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold truncate" style={{ color: "var(--text-1)", letterSpacing: "-0.014em" }}>
-                John Doe
+                {userName}
               </p>
               <p className="text-[10px] truncate" style={{ color: "var(--text-3)" }}>
-                john@workspace.ai
+                {userEmail}
               </p>
             </div>
           </div>
           <button
-            onClick={() => {
-              localStorage.removeItem("theme");
-              router.push("/");
-            }}
+            onClick={handleSignOut}
             className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-zinc-400 hover:text-red-500 transition-colors flex-shrink-0"
             title="Log out"
           >
@@ -272,6 +363,15 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
       </div>
     </div>
   );
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg)]">
+        <OrbitLoader size={48} />
+        <p className="text-xs text-[var(--text-3)] mt-4 font-mono animate-pulse">Establishing secure session…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex overflow-hidden app-bg">
@@ -358,15 +458,12 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
 
             {/* User avatar */}
             <div
-              onClick={() => {
-                localStorage.removeItem("theme");
-                router.push("/");
-              }}
+              onClick={handleSignOut}
               className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold cursor-pointer flex-shrink-0 hover:opacity-85 transition-opacity"
               style={{ background: "linear-gradient(135deg, var(--indigo), var(--violet))" }}
               title="Log out"
             >
-              JD
+              {userInitials}
             </div>
           </div>
         </header>
@@ -377,10 +474,10 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
           {/* ── Page Hero Header ── */}
           <div className="mb-8">
             <p
-              className="text-[11px] font-black uppercase tracking-[0.14em] mb-2"
+              className="text-[10px] font-bold uppercase tracking-[0.12em] mb-1.5"
               style={{ color: "var(--indigo)" }}
             >
-              <BlurText text={title} delay={60} />
+              Workspace
             </p>
             <h2
               className="text-3xl lg:text-4xl font-black"

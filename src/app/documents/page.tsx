@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
 import OrbitLoader from "@/components/app/OrbitLoader";
 import { supabase } from "@/lib/supabase";
@@ -45,6 +46,9 @@ export default function DocumentsPage() {
   const fetchDocs = async () => {
     try {
       setLoading(true);
+      // Artificial delay of 1 second for loader visualization
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const { data, error } = await supabase
         .from("documents")
         .select("*")
@@ -107,6 +111,7 @@ export default function DocumentsPage() {
         .from("documents")
         .insert([
           {
+            title: file.name,
             file_name: file.name,
             file_url: publicUrl,
             file_size: file.size,
@@ -127,10 +132,11 @@ export default function DocumentsPage() {
         setProgress(0);
       }, 1000);
 
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(progressInterval);
       console.error("Upload failed:", err);
-      alert("Upload failed: " + (err.message || "Unknown error"));
+      const errMsg = err && typeof err === "object" && "message" in err ? String((err as Record<string, unknown>).message) : String(err);
+      alert("Upload failed: " + errMsg);
       setUploading(false);
       setProgress(0);
     } finally {
@@ -168,9 +174,10 @@ export default function DocumentsPage() {
 
       // 3. Refresh list
       await fetchDocs();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete document: " + (err.message || "Unknown error"));
+      const errMsg = err && typeof err === "object" && "message" in err ? String((err as Record<string, unknown>).message) : String(err);
+      alert("Failed to delete document: " + errMsg);
     }
   };
 
@@ -193,14 +200,7 @@ export default function DocumentsPage() {
           <button
             onClick={triggerUploadClick}
             disabled={uploading}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-            style={{
-              background: "linear-gradient(135deg, var(--indigo), var(--violet))",
-              color: "white",
-              boxShadow: "0 2px 8px rgba(79,70,229,0.25)",
-              opacity: uploading ? 0.6 : 1,
-              pointerEvents: uploading ? "none" : "auto",
-            }}
+            className="grad-btn flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer"
           >
             {uploading ? (
               <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -208,209 +208,193 @@ export default function DocumentsPage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.1}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
             )}
-            {uploading ? `${progress}%` : "Upload"}
+            {uploading ? `Indexing ${progress}%` : "Upload File"}
           </button>
         </>
       }
     >
       <div className="max-w-5xl mx-auto space-y-4">
-        {/* ── Orbit Loader upload banner ── */}
+        {/* Ingestion progress banner */}
         {uploading && (
           <div
-            className="flex items-center gap-4 px-5 py-4 rounded-xl"
-            style={{
-              background: "rgba(79,70,229,0.05)",
-              border: "1px solid rgba(79,70,229,0.14)",
-            }}
+            className="flex items-center gap-4 px-5 py-4 rounded-xl border border-blue-500/10 bg-blue-500/5"
           >
             <OrbitLoader size={36} />
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium" style={{ color: "var(--text-1)", letterSpacing: "-0.014em" }}>
-                Indexing <span style={{ color: "var(--indigo)", fontWeight: 600 }}>{uploadName}</span>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                Indexing <span className="text-blue-600 dark:text-blue-400">{uploadName}</span>
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>
-                Uploading to storage and indexing in Supabase…
+              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                Parsing text chunks and building vector embeddings...
               </p>
-              <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div className="mt-2 h-1 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-800">
                 <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                    background: "linear-gradient(90deg, var(--indigo), var(--violet))",
-                  }}
+                  className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
 
-            <span
-              className="text-sm font-semibold font-mono flex-shrink-0"
-              style={{ color: "var(--indigo)" }}
-            >
+            <span className="text-sm font-bold font-mono text-blue-600 dark:text-blue-400">
               {progress}%
             </span>
           </div>
         )}
 
-        {/* ── Documents table card ── */}
-        <div className="glass-card rounded-xl overflow-hidden">
-          {/* Card header */}
+        {/* Documents Cards Grid wrapper */}
+        <div className="glass-card rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800">
+          {/* Section header */}
           <div
-            className="flex items-center justify-between px-5 py-3.5"
-            style={{ borderBottom: "1px solid var(--border)" }}
+            className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-zinc-800"
           >
             <div>
-              <p
-                className="text-sm font-semibold"
-                style={{ color: "var(--text-1)", letterSpacing: "-0.018em" }}
-              >
-                Knowledge Index
-              </p>
-              <p className="text-[10px]" style={{ color: "var(--text-3)" }}>
-                {docs.length} indexed files
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                Knowledge Library
+              </h3>
+              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+                {docs.length} active documents indexed in vector database
               </p>
             </div>
 
-            {/* Mini stat pills */}
+            {/* Total count badges */}
             <div className="flex items-center gap-2">
-              <span
-                className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                style={{ background: "rgba(5,150,105,0.08)", color: "#059669", border: "1px solid rgba(5,150,105,0.14)" }}
-              >
-                {docs.length} active
-              </span>
-              <span
-                className="text-[10px] font-semibold px-2 py-1 rounded-lg"
-                style={{ background: "var(--bg-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}
-              >
-                {formatBytes(totalStorage)} storage
+              <span className="badge badge-success text-xs">
+                {docs.length} Active
               </span>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <OrbitLoader size={40} />
-                <p className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>
-                  Connecting to Supabase Database...
-                </p>
+          {/* Cards content or loaders */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <OrbitLoader size={40} />
+              <p className="text-sm font-semibold text-slate-400 dark:text-zinc-500">
+                Syncing with vector index...
+              </p>
+            </div>
+          ) : docs.length === 0 ? (
+            <div className="text-center py-20 px-4 space-y-3.5">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center mx-auto bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25" />
+                </svg>
               </div>
-            ) : docs.length === 0 ? (
-              <div className="text-center py-16 space-y-2">
-                <p className="text-sm font-medium" style={{ color: "var(--text-2)" }}>
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
                   No documents found
                 </p>
-                <p className="text-xs" style={{ color: "var(--text-3)" }}>
-                  Upload your first file to get started indexing.
+                <p className="text-sm text-slate-400 dark:text-zinc-500 max-w-[280px] mx-auto leading-relaxed">
+                  Upload notes, PDFs, or code files to construct your semantic AI search space.
                 </p>
               </div>
-            ) : (
-              <table className="w-full" style={{ borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["File", "Type", "Size", "Uploaded At", "Status", "Actions"].map((h) => (
-                      <th
-                        key={h}
-                        className={`px-5 py-2.5 text-[9px] font-semibold uppercase tracking-widest ${
-                          h === "Actions" ? "text-right" : "text-left"
-                        }`}
-                        style={{ color: "var(--text-3)" }}
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {docs.map((doc) => {
-                    const lastDot = doc.file_name.lastIndexOf(".");
-                    const name = lastDot !== -1 ? doc.file_name.substring(0, lastDot) : doc.file_name;
-                    const ext = lastDot !== -1 ? doc.file_name.substring(lastDot + 1).toUpperCase() : "PDF";
-                    const extStyle = EXT_STYLE[ext] ?? { bg: "var(--bg-2)", color: "var(--text-2)" };
-                    const formattedDate = new Date(doc.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    });
+              <button
+                onClick={triggerUploadClick}
+                className="grad-btn px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Upload your first document
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-slate-50/30 dark:bg-black/10">
+              {docs.map((doc) => {
+                const lastDot = doc.file_name.lastIndexOf(".");
+                const ext = lastDot !== -1 ? doc.file_name.substring(lastDot + 1).toUpperCase() : "PDF";
+                const extStyle = EXT_STYLE[ext] ?? { bg: "var(--bg-2)", color: "var(--text-2)" };
+                const formattedDate = new Date(doc.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                });
 
-                    return (
-                      <tr
-                        key={doc.id}
-                        style={{ borderBottom: "1px solid var(--border)", transition: "background 0.12s" }}
-                        className="hover:bg-zinc-500/2"
-                      >
-                        {/* File name */}
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div
-                              className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                              style={{ background: "var(--bg-2)", border: "1px solid var(--border)" }}
-                            >
-                              <svg className="w-3.5 h-3.5" style={{ color: "var(--text-3)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                              </svg>
-                            </div>
-                            <span
-                              className="text-xs font-medium truncate max-w-[240px]"
-                              style={{ color: "var(--text-1)" }}
-                            >
-                              {doc.file_name}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Extension badge */}
-                        <td className="px-5 py-3">
+                return (
+                  <div
+                    key={doc.id}
+                    className="glass-card rounded-xl p-4.5 flex flex-col justify-between h-[155px] relative group hover:border-slate-300 dark:hover:border-zinc-700/80"
+                  >
+                    {/* Document details */}
+                    <div className="space-y-2.5">
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
                           <span
-                            className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
+                            className="text-[11px] font-bold px-1.5 py-0.5 rounded"
                             style={{ background: extStyle.bg, color: extStyle.color }}
                           >
                             {ext}
                           </span>
-                        </td>
-
-                        <td className="px-5 py-3 text-xs font-mono" style={{ color: "var(--text-2)" }}>
-                          {formatBytes(doc.file_size)}
-                        </td>
-                        <td className="px-5 py-3 text-xs" style={{ color: "var(--text-3)" }}>
-                          {formattedDate}
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-5 py-3">
-                          <span className="badge badge-success">
-                            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
-                              <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
-                            </svg>
-                            Ready
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-5 py-3 text-right">
-                          <button
-                            onClick={() => handleDelete(doc)}
-                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-400 hover:text-red-500 transition-colors cursor-pointer inline-flex items-center justify-center"
-                            title="Delete document"
+                          <span
+                            className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate"
+                            title={doc.file_name}
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
+                            {doc.file_name}
+                          </span>
+                        </div>
+                        
+                        <span className="badge badge-success flex-shrink-0 text-[11px] py-0.5 px-1.5">
+                          Ready
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-slate-400 dark:text-zinc-500 space-y-1 font-mono">
+                        <p>Size: {formatBytes(doc.file_size)}</p>
+                        <p>Uploaded: {formattedDate}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions panel */}
+                    <div
+                      className="flex items-center justify-between pt-3 mt-auto border-t border-slate-100 dark:border-zinc-800/80"
+                    >
+                      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        >
+                          Preview
+                        </a>
+                        <span className="text-slate-300 dark:text-zinc-800">·</span>
+                        
+                        <Link
+                          href="/chat"
+                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        >
+                          Ask AI
+                        </Link>
+                        <span className="text-slate-300 dark:text-zinc-800">·</span>
+
+                        <button
+                          onClick={() => alert("Reindexing document...")}
+                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                        >
+                          Reindex
+                        </button>
+                      </div>
+
+                      {/* Delete icon */}
+                      <button
+                        onClick={() => handleDelete(doc)}
+                        className="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors cursor-pointer inline-flex items-center justify-center"
+                        title="Delete document"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>
