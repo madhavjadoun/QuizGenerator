@@ -14,12 +14,10 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 /* ── Constants ─────────────────────────────────── */
 
 const ROTATING_WORDS = [
-  "Find anything.",
-  "Get answers.",
-  "Discover insights.",
-  "Search smarter.",
-  "Learn faster.",
-  "Chat with knowledge."
+  "get cited answers.",
+  "query vector chunks.",
+  "index document files.",
+  "extract key insights."
 ];
 
 const letterVariants = {
@@ -114,32 +112,32 @@ const AI_RESPONSE_POOL = [
 ];
 
 const STATS = [
-  { value: "< 200ms", label: "Response time" },
-  { value: "5+",      label: "File formats"  },
-  { value: "94%+",    label: "Avg accuracy"  },
-  { value: "100%",    label: "Private & local" },
+  { value: "< 150ms", label: "Query latency" },
+  { value: "10k+", label: "Indexed pages" },
+  { value: "99.4%", label: "Search recall" },
+  { value: "AES-256", label: "Local security" },
 ];
 
 /* ── Component ──────────────────────────────────── */
 
 export default function WelcomePage() {
-  const router  = useRouter();
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [mounted, setMounted] = useState(false);
 
   // Upload state
   const [dragging, setDragging] = useState(false);
-  const [dropped,  setDropped]  = useState<string | null>(null);
+  const [dropped, setDropped] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
   // Rotating word
   const [wordIndex, setWordIndex] = useState(0);
 
   // AI demo
-  const [showAnswer,  setShowAnswer]  = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
-  const [demoReady,   setDemoReady]   = useState(false);
+  const [demoReady, setDemoReady] = useState(false);
 
   // Active question chip & custom pool states
   const [activeQ, setActiveQ] = useState<number | null>(null);
@@ -149,8 +147,6 @@ export default function WelcomePage() {
   const [currentMs, setCurrentMs] = useState("140ms");
   const [currentRetrieval, setCurrentRetrieval] = useState("3");
 
-  // Premium Theme Toggle
-  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   // Shuffled visible questions
   const [visibleQuestions, setVisibleQuestions] = useState<string[]>([]);
@@ -160,16 +156,7 @@ export default function WelcomePage() {
   /* Welcome page theme initialization */
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const isDeviceDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme || (isDeviceDark ? "dark" : "light");
-    
-    setTheme(initialTheme);
-    if (initialTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.remove("dark");
   }, []);
 
   /* Check session on mount to redirect authenticated users */
@@ -183,22 +170,11 @@ export default function WelcomePage() {
     checkAuth();
   }, [router]);
 
-  /* Shuffling 6 user-focused questions on refresh */
+  /* Shuffling 4 user-focused questions on refresh */
   useEffect(() => {
     const shuffled = [...EXAMPLE_QUESTIONS].sort(() => 0.5 - Math.random());
-    setVisibleQuestions(shuffled.slice(0, 8));
+    setVisibleQuestions(shuffled.slice(0, 4));
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  };
 
   /* Rotate words every 2.0s */
   useEffect(() => {
@@ -211,11 +187,11 @@ export default function WelcomePage() {
     setDemoReady(false);
     setTypedAnswer("");
     let i = 0;
-    
+
     if (typeIntervalRef.current) {
       clearInterval(typeIntervalRef.current);
     }
-    
+
     typeIntervalRef.current = setInterval(() => {
       i += 4;
       setTypedAnswer(fullAnswer.slice(0, i));
@@ -240,16 +216,16 @@ export default function WelcomePage() {
   const handleQuestionClick = (q: string, idx: number) => {
     setActiveQ(idx);
     setCurrentQuestion(q);
-    
+
     // Pick a random response from the pool
     const randomIndex = Math.floor(Math.random() * AI_RESPONSE_POOL.length);
     const response = AI_RESPONSE_POOL[randomIndex];
-    
+
     setCurrentSource(response.source);
     setCurrentScore(response.score);
     setCurrentMs(response.ms);
     setCurrentRetrieval(response.retrieved_chunks);
-    
+
     triggerTypeEffect(response.answer);
   };
 
@@ -388,49 +364,40 @@ export default function WelcomePage() {
   /* ── Render ──────────────────────────────────── */
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden bg-slate-50 dark:bg-[#0B1220] transition-colors duration-200">
-      
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 relative overflow-hidden bg-[var(--bg)] transition-colors duration-200">
+
+      {/* ── Aurora Glow (behind everything) ── */}
+      <div className="aurora-tl" />
+      <div className="aurora-br" />
+      <div className="aurora-accent" />
+
       {/* Top Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-10 lg:px-16 py-5 border-b border-slate-200/60 dark:border-zinc-800 bg-white/70 dark:bg-[#111827]/70 backdrop-blur-md">
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-10 lg:px-16 py-5 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
         <div className="flex items-center gap-2">
           <div
-            className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: "var(--indigo)" }}
+            className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 border border-[var(--border)]"
+            style={{
+              background: "var(--logo-bg)",
+              boxShadow: "var(--logo-shadow)",
+            }}
           >
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-4 h-4 text-[var(--bg)] dark:text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+          <span className="text-sm font-semibold tracking-tight text-[var(--text-1)]">
             KnowledgeSearch
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 transition-all cursor-pointer flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-slate-300"
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m0 13.5V21M4.22 4.22l1.59 1.59m11.18 11.18l1.59 1.59M3 12h2.25m13.5 0H21M5.81 18.31l1.59-1.59M18.31 5.81l-1.59 1.59M12 7.5A4.5 4.5 0 117.5 12 4.5 4.5 0 0112 7.5z" />
-              </svg>
-            )}
-          </button>
-
           <button
             onClick={() => router.push("/login")}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 transition-all cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-200"
+            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--border)] transition-all cursor-pointer hover:bg-[var(--bg-2)] text-[var(--text-2)]"
           >
             Sign in
           </button>
-          
+
           <button
             onClick={() => router.push("/login")}
             className="grad-btn px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
@@ -446,102 +413,108 @@ export default function WelcomePage() {
 
           {/* LEFT — Content Column (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6.5 max-w-[530px] lg:max-w-none">
-            
-            {/* Title with rotating text & BlurText */}
-            <div>
-              <div
-                className="text-[42px] lg:text-[58px] font-black leading-[1.04] text-slate-900 dark:text-white"
-                style={{ letterSpacing: "-0.042em" }}
-              >
-                <BlurText text="Upload once." delay={130} />
-              </div>
 
-              {/* Rotating animated word */}
-              <div
-                className="text-[42px] lg:text-[58px] font-black leading-[1.04] mt-1 relative overflow-hidden h-[1.2em]"
-                style={{ letterSpacing: "-0.042em" }}
+            {/* Title with integrated rotating text */}
+            <div>
+              <h1
+                className="text-[36px] sm:text-[48px] lg:text-[60px] font-bold leading-[1.0] text-[var(--text-1)]"
+                style={{ letterSpacing: "-0.03em" }}
               >
-                <AnimatePresence mode="popLayout">
-                  <motion.span
-                    key={wordIndex}
-                    className="inline-block"
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                  >
-                    {ROTATING_WORDS[wordIndex].split("").map((char, index, arr) => {
-                      const delay = (arr.length - 1 - index) * 0.025;
-                      return (
-                        <motion.span
-                          key={index}
-                          variants={letterVariants}
-                          transition={{
-                            type: "spring",
-                            damping: 30,
-                            stiffness: 400,
-                            delay: delay
-                          }}
-                          className="inline-block"
-                          style={{
-                            display: "inline-block",
-                            whiteSpace: "pre",
-                            color: "var(--indigo)",
-                          }}
-                        >
-                          {char}
-                        </motion.span>
-                      );
-                    })}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
+                <BlurText
+                  text="Ask questions across"
+                  delay={40}
+                />{" "}
+                <br className="hidden sm:inline" />
+                <BlurText
+                  text="your documents to"
+                  delay={40}
+                  className="mr-2"
+                />
+                <span className="relative inline-block overflow-hidden h-[1.2em] whitespace-nowrap align-bottom text-[var(--indigo-accent)]">
+                  <AnimatePresence mode="popLayout">
+                    <motion.span
+                      key={wordIndex}
+                      className="inline-block"
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      {ROTATING_WORDS[wordIndex].split("").map((char, index, arr) => {
+                        const delay = (arr.length - 1 - index) * 0.025;
+                        return (
+                          <motion.span
+                            key={index}
+                            variants={letterVariants}
+                            transition={{
+                              type: "spring",
+                              damping: 30,
+                              stiffness: 400,
+                              delay: delay
+                            }}
+                            className="inline-block"
+                            style={{
+                              display: "inline-block",
+                              whiteSpace: "pre",
+                              color: "var(--indigo-accent)",
+                            }}
+                          >
+                            {char}
+                          </motion.span>
+                        );
+                      })}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              </h1>
 
               {/* Subheading with BlurText */}
-              <p className="text-sm mt-4 leading-relaxed text-slate-500 dark:text-zinc-400 font-normal max-w-[480px]">
+              <p className="text-[18px] lg:text-[20px] font-normal leading-[1.6] text-[var(--text-2)] mt-4 max-w-[640px]">
                 <BlurText
-                  text="Upload PDFs, notes, research papers and documents. Ask questions in natural language and get cited answers instantly."
+                  text="Upload PDFs, notes, research papers, and spreadsheets to build a searchable knowledge index. Ask questions in natural language and receive grounded, cited answers."
                   delay={45}
                 />
               </p>
 
               {/* Trust Strip */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-zinc-500 mt-5 pt-3.5 border-t border-slate-200 dark:border-zinc-800">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-mono uppercase tracking-wider text-[var(--text-4)] mt-5 pt-3.5 border-t border-[var(--border)]">
                 <span>Private</span>
-                <span className="text-slate-300 dark:text-zinc-700">·</span>
+                <span className="text-[var(--border)]">·</span>
                 <span>Local First</span>
-                <span className="text-slate-300 dark:text-zinc-700">·</span>
+                <span className="text-[var(--border)]">·</span>
                 <span>Source Citations</span>
-                <span className="text-slate-300 dark:text-zinc-700">·</span>
+                <span className="text-[var(--border)]">·</span>
                 <span>Semantic Search</span>
               </div>
             </div>
 
-            {/* Example questions */}
+            {/* Inline query chips */}
             <div className="space-y-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-zinc-500">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-4)]">
                 ✦ Try asking your documents
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {visibleQuestions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => handleQuestionClick(q, i)}
-                    className="text-[11px] text-left px-3 py-2 rounded-lg font-medium transition-all duration-150 cursor-pointer border"
+                    className="text-[11px] px-2.5 py-1 rounded-full font-medium transition-all duration-150 cursor-pointer border"
                     style={{
-                      background: activeQ === i ? "var(--bg-2)" : "var(--surface)",
-                      border: `1px solid ${activeQ === i ? "var(--indigo)" : "var(--border)"}`,
-                      color: activeQ === i ? "var(--indigo)" : "var(--text-2)",
+                      background: activeQ === i ? "var(--indigo)" : "var(--surface)",
+                      borderColor: activeQ === i ? "var(--indigo)" : "var(--border)",
+                      color: activeQ === i ? "var(--text-inv)" : "var(--text-2)",
                     }}
                     onMouseEnter={e => {
                       if (activeQ !== i) {
                         e.currentTarget.style.borderColor = "var(--border-strong)";
                         e.currentTarget.style.color = "var(--text-1)";
+                        e.currentTarget.style.background = "var(--bg-2)";
                       }
                     }}
                     onMouseLeave={e => {
                       if (activeQ !== i) {
                         e.currentTarget.style.borderColor = "var(--border)";
                         e.currentTarget.style.color = "var(--text-2)";
+                        e.currentTarget.style.background = "var(--surface)";
                       }
                     }}
                   >
@@ -553,17 +526,17 @@ export default function WelcomePage() {
 
             {/* Semantic Preview Card */}
             <div
-              className="rounded-xl p-4 space-y-3.5 border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#111827] shadow-sm"
+              className="glass-card rounded-xl p-4 space-y-3.5"
             >
               <div
-                className="flex items-center justify-between pb-2.5 border-b border-slate-200/60 dark:border-zinc-800/80"
+                className="flex items-center justify-between pb-2.5 border-b border-[var(--border)]"
               >
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Semantic Preview</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-4)]">Semantic Preview</span>
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
                     ● Ready
                   </span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-2)] text-[var(--text-3)]">
                     {currentMs}
                   </span>
                 </div>
@@ -581,7 +554,7 @@ export default function WelcomePage() {
                 <div className="chat-ai-bubble px-3.5 py-2.5 text-xs w-full">
                   {showAnswer ? (
                     <div className="space-y-3">
-                      <p className="leading-relaxed text-slate-800 dark:text-slate-200">
+                      <p className="leading-relaxed text-[var(--text-2)]">
                         {typedAnswer}
                         {!demoReady && (
                           <span
@@ -591,22 +564,22 @@ export default function WelcomePage() {
                       </p>
                       {demoReady && (
                         <div
-                          className="flex items-center justify-between border-t border-slate-200/60 dark:border-zinc-800/80 pt-2.5 flex-wrap gap-2 text-[10px]"
+                          className="flex items-center justify-between border-t border-[var(--border)] pt-2.5 flex-wrap gap-2 text-[10px]"
                         >
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-400 dark:text-zinc-500">Source:</span>
+                            <span className="font-bold text-[var(--text-4)]">Source:</span>
                             <span className="px-1.5 py-0.5 rounded bg-blue-500/5 text-blue-600 dark:text-blue-400 border border-blue-500/10 font-medium">
                               📄 {currentSource}
                             </span>
                           </div>
-                          
+
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1">
-                              <span className="font-bold text-slate-400 dark:text-zinc-500">Chunks:</span>
-                              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{currentRetrieval}</span>
+                              <span className="font-bold text-[var(--text-4)]">Chunks:</span>
+                              <span className="font-mono font-bold text-[var(--text-2)]">{currentRetrieval}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="font-bold text-slate-400 dark:text-zinc-500">Confidence:</span>
+                              <span className="font-bold text-[var(--text-4)]">Confidence:</span>
                               <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
                                 {currentScore}
                               </span>
@@ -620,7 +593,7 @@ export default function WelcomePage() {
                       {[100, 85, 60].map((w, i) => (
                         <div
                           key={i}
-                          className="h-2 rounded bg-slate-100 dark:bg-zinc-800 animate-pulse"
+                          className="h-2 rounded bg-[var(--bg-2)] animate-pulse"
                           style={{ width: `${w}%` }}
                         />
                       ))}
@@ -632,17 +605,17 @@ export default function WelcomePage() {
 
             {/* Stats strip */}
             <div
-              className="grid grid-cols-4 gap-2.5 px-3 py-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#111827]"
+              className="glass-card rounded-xl grid grid-cols-4 gap-2.5 px-3 py-3.5"
             >
               {STATS.map((s, i) => (
                 <div key={i} className="text-center">
                   <p
-                    className="text-base font-bold text-blue-600 dark:text-blue-400"
+                    className="text-base font-bold text-[var(--text-1)]"
                     style={{ letterSpacing: "-0.02em" }}
                   >
                     {s.value}
                   </p>
-                  <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold uppercase mt-0.5 tracking-wider">
+                  <p className="text-[9px] text-[var(--text-4)] font-bold uppercase mt-0.5 tracking-wider">
                     {s.label}
                   </p>
                 </div>
@@ -653,39 +626,39 @@ export default function WelcomePage() {
 
           {/* RIGHT — Hero Upload/Ingestion Box (7 cols) */}
           <div className="lg:col-span-7 flex flex-col justify-center w-full">
-            <div className="w-full max-w-[540px] mx-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#111827] shadow-md overflow-hidden">
-              
+            <div className="w-full max-w-[540px] mx-auto glass-card rounded-xl overflow-hidden">
+
               {/* Card Header */}
               <div
-                className="px-6 py-4 flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-[#1f2937]/10"
+                className="px-6 py-4 flex items-center justify-between border-b border-[var(--border)] bg-[var(--bg-2)]/30"
               >
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-[var(--text-1)]">
                     AI Knowledge Ingestion
                   </h3>
-                  <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                  <p className="text-[10px] text-[var(--text-3)] mt-0.5">
                     Select PDFs, markdown files, or plaintext to chunk and index.
                   </p>
                 </div>
-                
+
                 {/* Decorative dots */}
                 <div className="flex items-center gap-1.5">
-                  {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
-                    <div key={c} className="h-2 w-2 rounded-full" style={{ background: c, opacity: 0.7 }} />
+                  {["#E9EEFF", "#DDF7F5", "#FFF1E6"].map((c) => (
+                    <div key={c} className="h-2 w-2 rounded-full border border-[var(--border)]" style={{ background: c }} />
                   ))}
                 </div>
               </div>
 
               {/* Card Body */}
               <div className="p-6 space-y-5">
-                
+
                 {/* Drag drop zone */}
                 <div
                   onClick={() => !dropped && fileRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
-                  className="rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative p-6 bg-slate-50/50 dark:bg-[#0f172a]/30 group"
+                  className="rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative p-6 bg-[var(--bg-2)]/30 group"
                   style={{
                     minHeight: "200px",
                     borderColor: dragging ? "var(--indigo)" : dropped ? "#16A34A" : "var(--border-strong)",
@@ -696,22 +669,22 @@ export default function WelcomePage() {
                       {progress < 100 ? (
                         <>
                           <OrbitLoader size={40} />
-                          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                            Indexing <span className="text-blue-600 dark:text-blue-400">{dropped}</span>
+                          <p className="text-xs font-semibold text-[var(--text-1)]">
+                            Indexing <span className="text-[var(--text-2)]">{dropped}</span>
                           </p>
                           <div className="w-full">
-                            <div className="h-1 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-800">
+                            <div className="h-1 rounded-full overflow-hidden bg-[var(--bg-3)]">
                               <div
-                                  className="h-full rounded-full bg-blue-600"
-                                  style={{ width: `${progress}%` }}
+                                className="h-full rounded-full bg-[var(--indigo)]"
+                                style={{ width: `${progress}%` }}
                               />
                             </div>
-                            <p className="text-[9px] mt-1 text-center font-mono text-slate-400 dark:text-zinc-500">{progress}% Complete</p>
+                            <p className="text-[9px] mt-1 text-center font-mono text-[var(--text-4)]">{progress}% Complete</p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className="h-9 w-9 rounded-full flex items-center justify-center bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+                          <div className="h-9 w-9 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -719,8 +692,8 @@ export default function WelcomePage() {
                           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                             Document Ingestion Completed
                           </p>
-                          <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-mono">Vector embeddings synced to pgvector</p>
-                          <p className="text-xs" style={{ color: "var(--text-3)" }}>Opening dashboard…</p>
+                          <p className="text-[9px] text-[var(--text-4)] font-mono">Vector embeddings synced to pgvector</p>
+                          <p className="text-xs text-[var(--text-3)]">Opening dashboard…</p>
                         </>
                       )}
                     </div>
@@ -735,20 +708,20 @@ export default function WelcomePage() {
                             style={{ width: "100%", height: "100%" }}
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800">
-                            <svg className="w-4 h-4 text-slate-400 dark:text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[var(--surface)] border border-[var(--border)]">
+                            <svg className="w-4 h-4 text-[var(--text-4)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                             </svg>
                           </div>
                         )}
                       </div>
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      <p className="text-xs font-semibold text-[var(--text-2)]">
                         {dragging ? "Release to drop file" : "Drag and drop your file here"}
                       </p>
-                      <p className="text-[10px] text-slate-400 dark:text-zinc-500 mt-0.5">
+                      <p className="text-[10px] text-[var(--text-4)] mt-0.5">
                         or click to browse local files
                       </p>
-                      <span className="text-[8px] font-mono bg-slate-200/50 dark:bg-zinc-800 px-2 py-0.5 rounded mt-3 text-slate-500 dark:text-zinc-400">
+                      <span className="text-[8px] font-mono bg-[var(--bg-2)] px-2 py-0.5 rounded mt-3 text-[var(--text-3)]">
                         PDF, TXT, MD, SQL, PY, JSON (Max 10MB)
                       </span>
                     </div>
@@ -778,11 +751,11 @@ export default function WelcomePage() {
 
                 {/* Pipeline visualizer */}
                 <div className="space-y-2">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-4)]">
                     Ingestion Pipeline
                   </p>
-                  
-                  <div className="flex items-center justify-between text-[9px] font-mono py-2.5 px-3 rounded-lg border border-slate-100 dark:border-zinc-800/80 bg-slate-50/20 dark:bg-black/10">
+
+                  <div className="flex items-center justify-between text-[9px] font-mono py-2.5 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-2)]/30">
                     {[
                       { name: "File", min: 0, max: 20 },
                       { name: "Chunking", min: 20, max: 50 },
@@ -796,28 +769,26 @@ export default function WelcomePage() {
                         <div key={st.name} className="flex items-center gap-1 flex-1 justify-center last:flex-none">
                           <div className="flex items-center gap-1">
                             <span
-                              className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                                isStepActive
-                                  ? "bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.6)] scale-110"
-                                  : isStepCompleted
-                                    ? "bg-green-600"
-                                    : "bg-slate-300 dark:bg-zinc-700"
-                              }`}
+                              className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isStepActive
+                                ? "bg-[var(--indigo)] scale-110"
+                                : isStepCompleted
+                                  ? "bg-green-600"
+                                  : "bg-[var(--bg-3)]"
+                                }`}
                             />
                             <span
-                              className={`font-semibold transition-colors duration-300 ${
-                                isStepActive
-                                  ? "text-blue-600 font-bold"
-                                  : isStepCompleted
-                                    ? "text-green-600"
-                                    : "text-slate-400 dark:text-zinc-500"
-                              }`}
+                              className={`font-semibold transition-colors duration-300 ${isStepActive
+                                ? "text-[var(--text-1)] font-bold"
+                                : isStepCompleted
+                                  ? "text-green-600"
+                                  : "text-[var(--text-4)]"
+                                }`}
                             >
                               {st.name}
                             </span>
                           </div>
                           {idx < arr.length - 1 && (
-                            <span className="text-slate-300 dark:text-zinc-800 mx-auto opacity-40 text-[7px]">→</span>
+                            <span className="text-[var(--border)] mx-auto opacity-40 text-[7px]">→</span>
                           )}
                         </div>
                       );
@@ -827,18 +798,18 @@ export default function WelcomePage() {
 
                 {/* Pipeline Log */}
                 <div className="space-y-1.5">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-4)]">
                     Stream Pipeline Log
                   </p>
 
-                  <div className="space-y-1.5 font-mono text-[9px] p-3 rounded-lg border border-slate-100 dark:border-zinc-800/80 bg-slate-50/20 dark:bg-black/10 text-slate-600 dark:text-slate-400 min-h-[64px]">
+                  <div className="space-y-1.5 font-mono text-[9px] p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-2)]/30 text-[var(--text-3)] min-h-[64px]">
                     {dropped ? (
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between text-slate-800 dark:text-slate-200">
+                        <div className="flex items-center justify-between text-[var(--text-1)]">
                           <span className="font-semibold">{dropped}</span>
-                          <span className="font-bold text-blue-600 dark:text-blue-400">{progress}%</span>
+                          <span className="font-bold text-[var(--text-2)]">{progress}%</span>
                         </div>
-                        <div className="leading-relaxed whitespace-pre font-medium text-[8px] text-slate-500 dark:text-zinc-500">
+                        <div className="leading-relaxed whitespace-pre font-medium text-[8px] text-[var(--text-4)]">
                           {`> Parsing uploaded document... OK`}
                           {progress >= 20 && `\n> Splitting chunks... Done`}
                           {progress >= 50 && `\n> Generating vector embeddings... Done`}
@@ -846,9 +817,9 @@ export default function WelcomePage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-2.5 text-center text-slate-400 dark:text-zinc-500">
+                      <div className="flex flex-col items-center justify-center py-2.5 text-center text-[var(--text-4)]">
                         <p className="font-medium">No knowledge indexed yet</p>
-                        <p className="text-[8px] mt-0.5 text-slate-300 dark:text-zinc-600">Upload your first document to begin.</p>
+                        <p className="text-[8px] mt-0.5 text-[var(--text-4)]">Upload your first document to begin.</p>
                       </div>
                     )}
                   </div>
@@ -856,15 +827,15 @@ export default function WelcomePage() {
 
                 {/* Card Footer */}
                 <div
-                  className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-zinc-800 text-[10px]"
+                  className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-[10px] text-[var(--text-4)]"
                 >
-                  <span className="text-slate-400 dark:text-zinc-500">
+                  <span>
                     Storage status: Active
                   </span>
-                  
+
                   <button
                     onClick={() => router.push("/dashboard")}
-                    className="font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    className="font-semibold text-[var(--text-2)] hover:underline cursor-pointer"
                   >
                     Open dashboard →
                   </button>

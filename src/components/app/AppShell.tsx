@@ -240,29 +240,29 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
         className="flex items-center gap-2.5 px-4 py-[14px]"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        {/* Logo mark with gradient border */}
+        {/* Logo mark with semantic design tokens */}
         <div className="grad-border rounded-[10px] flex-shrink-0">
           <div
-            className="h-7 w-7 rounded-[9px] flex items-center justify-center"
+            className="h-7 w-7 rounded-[9px] flex items-center justify-center border border-[var(--border)]"
             style={{
-              background: "linear-gradient(135deg, var(--indigo), var(--violet))",
-              boxShadow: "0 2px 8px rgba(79,70,229,0.28)",
+              background: "var(--logo-bg)",
+              boxShadow: "var(--logo-shadow)",
             }}
           >
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+            <svg className="w-3.5 h-3.5 text-[var(--bg)] dark:text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
         </div>
         <div>
           <p
-            className="text-sm font-semibold tracking-tight leading-none"
-            style={{ color: "var(--text-1)", letterSpacing: "-0.024em" }}
+            className="text-sm font-semibold tracking-tight leading-none text-[var(--text-1)]"
+            style={{ letterSpacing: "-0.024em" }}
           >
             KnowledgeSearch
           </p>
-          <p className="text-[10px] mt-0.5" style={{ color: "var(--text-3)" }}>
-            AI Knowledge Assistant
+          <p className="text-[10px] mt-0.5 text-[var(--text-4)] font-medium">
+            Research Workspace
           </p>
         </div>
       </div>
@@ -270,8 +270,7 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
       {/* Navigation */}
       <nav className="flex-1 p-2.5 flex flex-col gap-0.5">
         <p
-          className="text-[9px] font-semibold uppercase tracking-widest px-2 pb-1.5 pt-1"
-          style={{ color: "var(--text-3)" }}
+          className="text-[9px] font-semibold uppercase tracking-widest px-2 pb-1.5 pt-1 text-[var(--text-4)]"
         >
           Workspace
         </p>
@@ -290,32 +289,52 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
 
       {/* Bottom section */}
       <div style={{ borderTop: "1px solid var(--border)" }} className="p-3.5 space-y-3">
-        {/* Knowledge Base Status Card */}
+        {/* System Status Card */}
         <div
-          className="p-3 rounded-lg space-y-2.5"
+          className="p-3 rounded-xl space-y-3"
           style={{
-            background: "var(--bg)",
+            background: "var(--bg-2)/30",
             border: "1px solid var(--border)",
           }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Knowledge Base</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-4)]">System Status</span>
             <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-600 dark:text-emerald-500">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+              <span className="relative flex h-1 w-1">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1 w-1 bg-emerald-500" />
               </span>
-              Active
+              Online
             </span>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
-              <span>Documents</span>
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{docCount !== null ? docCount : "..."}</span>
+          {/* Status Indicators Grid */}
+          <div className="grid grid-cols-3 gap-1 border-b border-[var(--border)] pb-2.5 text-[9px] font-semibold text-[var(--text-3)]">
+            <div className="flex flex-col items-center p-1 rounded bg-[var(--bg)] border border-[var(--border)]/50">
+              <span className="text-emerald-500 leading-none">●</span>
+              <span className="text-[8px] font-mono text-[var(--text-4)] mt-0.5">Storage</span>
+              <span className="font-bold text-[8px] mt-0.5 text-[var(--text-2)]">Active</span>
             </div>
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 dark:text-zinc-400">
-              <span>Storage</span>
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            <div className="flex flex-col items-center p-1 rounded bg-[var(--bg)] border border-[var(--border)]/50">
+              <span className="text-emerald-500 leading-none">●</span>
+              <span className="text-[8px] font-mono text-[var(--text-4)] mt-0.5">Index</span>
+              <span className="font-bold text-[8px] mt-0.5 text-[var(--text-2)]">Ready</span>
+            </div>
+            <div className="flex flex-col items-center p-1 rounded bg-[var(--bg)] border border-[var(--border)]/50">
+              <span className="text-emerald-500 leading-none">●</span>
+              <span className="text-[8px] font-mono text-[var(--text-4)] mt-0.5">Retrieval</span>
+              <span className="font-bold text-[8px] mt-0.5 text-[var(--text-2)]">Online</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] text-[var(--text-3)]">
+              <span>Indexed Files</span>
+              <span className="font-semibold text-[var(--text-2)]">{docCount !== null ? docCount : "..."}</span>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-[var(--text-3)]">
+              <span>Vector Storage</span>
+              <span className="font-semibold text-[var(--text-2)]">
                 {(() => {
                   if (storageUsed === 0) return "0 Bytes";
                   const k = 1024;
@@ -325,16 +344,14 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
                 })()} / 100 MB
               </span>
             </div>
-          </div>
-
-          <div className="h-1 rounded-full overflow-hidden" style={{ background: "var(--bg-3)" }}>
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${Math.min(Math.round((storageUsed / (100 * 1024 * 1024)) * 100), 100)}%`,
-                background: "var(--indigo)",
-              }}
-            />
+            <div className="h-1 rounded-full overflow-hidden bg-[var(--bg-3)]">
+              <div
+                className="h-full rounded-full transition-all duration-300 bg-[var(--indigo)]"
+                style={{
+                  width: `${Math.min(Math.round((storageUsed / (100 * 1024 * 1024)) * 100), 100)}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -502,21 +519,20 @@ export default function AppShell({ children, title, subtitle, action }: AppShell
           {/* ── Page Hero Header ── */}
           <div className="mb-8">
             <p
-              className="text-[10px] font-bold uppercase tracking-[0.12em] mb-1.5"
-              style={{ color: "var(--indigo)" }}
+              className="text-[12px] font-medium tracking-[0.08em] mb-1 text-[var(--text-4)] uppercase"
             >
               Workspace
             </p>
             <h2
-              className="text-3xl lg:text-4xl font-black"
-              style={{ color: "var(--text-1)", letterSpacing: "-0.038em", lineHeight: 1.1 }}
+              className="text-2xl lg:text-3xl font-bold"
+              style={{ color: "var(--text-1)", letterSpacing: "-0.025em", lineHeight: 1.15 }}
             >
               <BlurText text={title} delay={140} />
             </h2>
             {subtitle && (
               <p
-                className="text-sm mt-2.5"
-                style={{ color: "var(--text-3)", letterSpacing: "-0.012em" }}
+                className="text-sm lg:text-base mt-2 font-normal leading-[1.6]"
+                style={{ color: "var(--text-3)", letterSpacing: "-0.011em" }}
               >
                 <BlurText text={subtitle} delay={80} />
               </p>

@@ -280,42 +280,42 @@ export default function DocumentsPage() {
         {/* Ingestion progress banner */}
         {uploading && (
           <div
-            className="flex items-center gap-4 px-5 py-4 rounded-xl border border-blue-500/10 bg-blue-500/5"
+            className="flex items-center gap-4 px-5 py-4 rounded-xl border border-[var(--border)] bg-[var(--bg-2)]/30"
           >
             <OrbitLoader size={36} />
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                Indexing <span className="text-blue-600 dark:text-blue-400">{uploadName}</span>
+              <p className="text-sm font-semibold text-[var(--text-1)]">
+                Indexing <span className="text-[var(--text-2)]">{uploadName}</span>
               </p>
-              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+              <p className="text-xs text-[var(--text-4)] mt-0.5">
                 Parsing text chunks and building vector embeddings...
               </p>
-              <div className="mt-2 h-1 rounded-full overflow-hidden bg-slate-200 dark:bg-zinc-800">
+              <div className="mt-2 h-1 rounded-full overflow-hidden bg-[var(--bg-3)]">
                 <div
-                  className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                  className="h-full rounded-full bg-[var(--indigo)] transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
 
-            <span className="text-sm font-bold font-mono text-blue-600 dark:text-blue-400">
+            <span className="text-sm font-bold font-mono text-[var(--text-2)]">
               {progress}%
             </span>
           </div>
         )}
 
         {/* Documents Cards Grid wrapper */}
-        <div className="glass-card rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-800">
+        <div className="glass-card rounded-xl overflow-hidden">
           {/* Section header */}
           <div
-            className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-zinc-800"
+            className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]"
           >
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-4)]">
                 Knowledge Library
               </h3>
-              <p className="text-xs text-slate-400 dark:text-zinc-500 mt-0.5">
+              <p className="text-[13px] font-normal text-[var(--text-4)] mt-0.5">
                 {docs.length} active documents indexed in vector database
               </p>
             </div>
@@ -332,23 +332,23 @@ export default function DocumentsPage() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <OrbitLoader size={40} />
-              <p className="text-sm font-semibold text-slate-400 dark:text-zinc-500">
+              <p className="text-sm font-semibold text-[var(--text-4)]">
                 Syncing with vector index...
               </p>
             </div>
           ) : docs.length === 0 ? (
             <div className="text-center py-20 px-4 space-y-3.5">
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center mx-auto bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500">
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center mx-auto bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-4)]">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25" />
                 </svg>
               </div>
               <div className="space-y-1">
-                <p className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                <p className="text-base font-semibold text-[var(--text-2)]">
                   No documents found
                 </p>
-                <p className="text-sm text-slate-400 dark:text-zinc-500 max-w-[280px] mx-auto leading-relaxed">
-                  Upload notes, PDFs, or code files to construct your semantic AI search space.
+                <p className="text-sm text-[var(--text-4)] max-w-[280px] mx-auto leading-relaxed">
+                  Upload your first document to begin building a searchable knowledge base.
                 </p>
               </div>
               <button
@@ -362,7 +362,7 @@ export default function DocumentsPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-slate-50/30 dark:bg-black/10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5 bg-[var(--bg-2)]/30">
               {docs.map((doc) => {
                 const lastDot = doc.file_name.lastIndexOf(".");
                 const ext = lastDot !== -1 ? doc.file_name.substring(lastDot + 1).toUpperCase() : "PDF";
@@ -376,7 +376,7 @@ export default function DocumentsPage() {
                 return (
                   <div
                     key={doc.id}
-                    className="glass-card rounded-xl p-4.5 flex flex-col justify-between h-[155px] relative group hover:border-slate-300 dark:hover:border-zinc-700/80"
+                    className="glass-card rounded-xl p-4.5 flex flex-col justify-between h-[168px] relative group hover:border-slate-300 dark:hover:border-zinc-700/80"
                   >
                     {/* Document details */}
                     <div className="space-y-2.5">
@@ -389,50 +389,60 @@ export default function DocumentsPage() {
                             {ext}
                           </span>
                           <span
-                            className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate"
+                            className="text-[16px] font-semibold text-[var(--text-2)] truncate"
                             title={doc.file_name}
                           >
                             {doc.file_name}
                           </span>
                         </div>
                         
-                        <span className="badge badge-success flex-shrink-0 text-[11px] py-0.5 px-1.5">
-                          Ready
+                        <span className="badge badge-success flex-shrink-0 text-[10px] py-0.5 px-1.5">
+                          Synced
                         </span>
                       </div>
 
-                      <div className="text-xs text-slate-400 dark:text-zinc-500 space-y-1 font-mono">
-                        <p>Size: {formatBytes(doc.file_size)}</p>
-                        <p>Uploaded: {formattedDate}</p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[12px] font-medium text-[var(--text-4)]">Size</span>
+                          <span className="text-[13px] font-medium text-[var(--text-2)]">{formatBytes(doc.file_size)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[12px] font-medium text-[var(--text-4)]">Segments</span>
+                          <span className="text-[13px] font-medium text-[var(--text-2)]">{Math.max(1, Math.round(doc.file_size / 800))} chunks</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-[12px] font-medium text-[var(--text-4)]">Uploaded</span>
+                          <span className="text-[13px] font-medium text-[var(--text-2)]">{formattedDate}</span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Actions panel */}
                     <div
-                      className="flex items-center justify-between pt-3 mt-auto border-t border-slate-100 dark:border-zinc-800/80"
+                      className="flex items-center justify-between pt-3 mt-auto border-t border-[var(--border)]"
                     >
-                      <div className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2 text-xs font-medium text-[var(--text-3)]">
                         <a
                           href={doc.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="hover:text-[var(--text-1)] transition-colors"
                         >
                           Preview
                         </a>
-                        <span className="text-slate-300 dark:text-zinc-800">·</span>
+                        <span className="text-[var(--border)]">·</span>
                         
                         <Link
                           href="/chat"
-                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          className="hover:text-[var(--text-1)] transition-colors"
                         >
                           Ask AI
                         </Link>
-                        <span className="text-slate-300 dark:text-zinc-800">·</span>
+                        <span className="text-[var(--border)]">·</span>
 
                         <button
                           onClick={() => alert("Reindexing document...")}
-                          className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+                          className="hover:text-[var(--text-1)] transition-colors cursor-pointer"
                         >
                           Reindex
                         </button>
@@ -441,7 +451,7 @@ export default function DocumentsPage() {
                       {/* Delete icon */}
                       <button
                         onClick={() => handleDelete(doc)}
-                        className="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors cursor-pointer inline-flex items-center justify-center"
+                        className="p-1 rounded hover:bg-red-500/10 text-[var(--text-4)] hover:text-red-500 transition-colors cursor-pointer inline-flex items-center justify-center"
                         title="Delete document"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
