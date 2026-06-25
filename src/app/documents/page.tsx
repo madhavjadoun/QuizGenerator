@@ -16,12 +16,12 @@ interface SupabaseDoc {
 
 /* Color config per extension */
 const EXT_STYLE: Record<string, { bg: string; color: string }> = {
-  PDF:  { bg: "rgba(239,68,68,0.08)",   color: "#DC2626" },
-  TXT:  { bg: "rgba(59,130,246,0.08)",  color: "#2563EB" },
-  SQL:  { bg: "rgba(16,185,129,0.08)",  color: "#059669" },
-  MD:   { bg: "rgba(124,58,237,0.08)",  color: "#7C3AED" },
-  JSON: { bg: "rgba(245,158,11,0.08)",  color: "#D97706" },
-  PY:   { bg: "rgba(6,182,212,0.08)",   color: "#0891B2" },
+  PDF: { bg: "rgba(239,68,68,0.08)", color: "#DC2626" },
+  TXT: { bg: "rgba(59,130,246,0.08)", color: "#2563EB" },
+  SQL: { bg: "rgba(16,185,129,0.08)", color: "#059669" },
+  MD: { bg: "rgba(124,58,237,0.08)", color: "#7C3AED" },
+  JSON: { bg: "rgba(245,158,11,0.08)", color: "#D97706" },
+  PY: { bg: "rgba(6,182,212,0.08)", color: "#0891B2" },
 };
 
 /* Format bytes helper */
@@ -40,7 +40,7 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadName, setUploadName] = useState("");
   const [progress, setProgress] = useState(0);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocs = async () => {
@@ -79,6 +79,14 @@ export default function DocumentsPage() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    const { data, error } = await supabase.auth.getSession();
+
+    console.log("========== SESSION ==========");
+    console.log("Session:", data.session);
+    console.log("User:", data.session?.user);
+    console.log("User ID:", data.session?.user?.id);
+    console.log("Error:", error);
+    console.log("=============================");
     if (!file) return;
 
     setUploadName(file.name);
@@ -172,6 +180,40 @@ export default function DocumentsPage() {
       }
 
       console.log("[Documents Upload] DB insert succeeded.");
+
+      console.log("[Documents Upload] Triggering PDF document processing...");
+      const { data: freshSessionData, error: freshSessionError } = await supabase.auth.getSession();
+      if (freshSessionError || !freshSessionData.session) {
+        throw new Error("Unable to authenticate processing request: " + (freshSessionError?.message || "No session"));
+      }
+
+      const accessToken = freshSessionData.session.access_token;
+      const processResponse = await fetch("/api/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          storagePath,
+          fileName: file.name
+        })
+      });
+
+      if (!processResponse.ok) {
+        const errText = await processResponse.text();
+        let errMsg = errText;
+        try {
+          const errObj = JSON.parse(errText);
+          if (errObj && typeof errObj === "object" && "error" in errObj) {
+            errMsg = String(errObj.error);
+          }
+        } catch {}
+        throw new Error(errMsg || `RAG processing failed with status: ${processResponse.status}`);
+      }
+
+      console.log("[Documents Upload] RAG processing complete.");
+
       clearInterval(progressInterval);
       setProgress(100);
       await fetchDocs();
@@ -395,7 +437,7 @@ export default function DocumentsPage() {
                             {doc.file_name}
                           </span>
                         </div>
-                        
+
                         <span className="badge badge-success flex-shrink-0 text-[10px] py-0.5 px-1.5">
                           Synced
                         </span>
@@ -431,7 +473,7 @@ export default function DocumentsPage() {
                           Preview
                         </a>
                         <span className="text-[var(--border)]">·</span>
-                        
+
                         <Link
                           href="/chat"
                           className="hover:text-[var(--text-1)] transition-colors"

@@ -332,6 +332,30 @@ export default function WelcomePage() {
       }
 
       console.log("[Upload] DB insert succeeded.");
+
+      // Trigger RAG document parsing pipeline asynchronously
+      console.log("[Upload] Triggering PDF document processing...");
+      fetch("/api/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token || ""}`,
+        },
+        body: JSON.stringify({
+          storagePath,
+          fileName: file.name
+        })
+      }).then(async res => {
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("[Upload] Document processing error:", errText);
+        } else {
+          console.log("[Upload] Document processing triggered/finished successfully.");
+        }
+      }).catch(err => {
+        console.error("[Upload] Document processing trigger failed:", err);
+      });
+
       clearInterval(progressInterval);
       setProgress(100);
 
@@ -408,8 +432,8 @@ export default function WelcomePage() {
       </div>
 
       {/* Main Grid */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex items-center min-h-screen px-6 sm:px-10 lg:px-16 pt-24 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 w-full items-start">
+      <div className="relative z-10 w-full max-w-7xl mx-auto flex items-center min-h-screen px-8 sm:px-12 lg:px-20 pt-24 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-[72px] w-full items-start">
 
           {/* LEFT — Content Column (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6.5 max-w-[530px] lg:max-w-none">
@@ -626,7 +650,7 @@ export default function WelcomePage() {
 
           {/* RIGHT — Hero Upload/Ingestion Box (7 cols) */}
           <div className="lg:col-span-7 flex flex-col justify-center w-full">
-            <div className="w-full max-w-[540px] mx-auto glass-card rounded-xl overflow-hidden">
+            <div className="w-full max-w-[540px] mx-auto lg:ml-auto lg:mr-0 glass-card rounded-xl overflow-hidden">
 
               {/* Card Header */}
               <div
