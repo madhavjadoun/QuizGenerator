@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { vectorSearch } from "@/lib/rag/search";
+import { getAIProvider } from "@/lib/rag/aiProvider";
+import { retrieveAndGenerate } from "@/lib/rag/retrieval";
+
+export async function GET() {
+  try {
+    const provider = getAIProvider();
+    return NextResponse.json({ provider: provider.name });
+  } catch {
+    const fallbackName = process.env.AI_PROVIDER === "ollama" ? "Ollama (Development)" : "Gemini";
+    return NextResponse.json({ provider: fallbackName });
+  }
+}
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { question, documentId } = body;
 
     if (!question) {
@@ -30,16 +41,28 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log(`[RAG Ingestion] Performing similarity search for query: "${question}"`);
-    const results = await vectorSearch(supabaseClient, question, {
-      documentId,
-      threshold: 0.1, // lenient threshold to show match rankings
-      limit: 5,       // retrieve top 5 matching chunks
-    });
+    // Run the production-grade retrieval and generation pipeline
+    const result = await retrieveAndGenerate(supabaseClient, question, documentId || undefined);
+
+    // Maintain developer diagnostics logging
+    console.log("=== [ADAPTIVE RETRIEVAL ENGINE DIAGNOSTICS] ===");
+    console.log(`Retrieval Mode: ${result.intent}`);
+    console.log(`Selected Document: ${documentId || "All Documents"}`);
+    console.log(`Total Chunks: ${result.metrics.totalChunks}`);
+    console.log(`Retrieved Chunks: ${result.metrics.retrievedChunksCount}`);
+    console.log(`Removed Duplicates: ${result.metrics.removedDuplicatesCount}`);
+    console.log(`Merged Chunks: ${result.metrics.mergedChunksCount}`);
+    console.log(`Batch Count: 0`);
+    console.log(`Final Context Tokens: ${result.metrics.finalContextTokens}`);
+    console.log(`Gemini Input Tokens: ${result.metrics.geminiInputTokens}`);
+    console.log(`Execution Time: ${result.metrics.executionTimeMs}ms`);
+    console.log("================================================");
 
     return NextResponse.json({
       success: true,
-      results,
+      answer: result.answer,
+      sources: result.sources,
+      provider: result.provider,
     });
 
   } catch (err) {

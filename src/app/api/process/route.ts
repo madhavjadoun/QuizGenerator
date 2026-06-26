@@ -2,19 +2,26 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { parsePDF } from "@/lib/rag/parser";
-import { chunkDocument } from "@/lib/rag/chunk";
-import { generateEmbedding } from "@/lib/rag/embedding";
+import { chunkDocument, stripMetadata } from "@/lib/rag/chunk";
+import { generateEmbedding, generateEmbeddingsBatch } from "@/lib/rag/embedding";
 
 export async function POST(request: Request) {
   const startTime = Date.now();
 
   try {
     const body = await request.json();
-    const { storagePath, fileName } = body;
+    const { storagePath, documentId } = body;
 
     if (!storagePath) {
       return NextResponse.json(
         { error: "Missing storagePath in request body" },
+        { status: 400 }
+      );
+    }
+
+    if (!documentId) {
+      return NextResponse.json(
+        { error: "Missing documentId in request body" },
         { status: 400 }
       );
     }
@@ -58,17 +65,14 @@ export async function POST(request: Request) {
 
     const arrayBuffer = await fileData.arrayBuffer();
 
-    console.log(`[RAG Pipeline] Parsing PDF: ${fileName || storagePath}`);
+    console.log(`[RAG Pipeline] Parsing PDF`);
     const parseResult = await parsePDF(arrayBuffer);
 
     // Look up the document ID in the database using the authenticated client
-    const searchName = fileName || storagePath.split("/").pop() || storagePath;
     const { data: docData, error: docError } = await supabaseClient
       .from("documents")
-      .select("id, user_id")
-      .eq("file_name", searchName)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .select("id, user_id, file_name")
+      .eq("id", documentId)
       .single();
 
     if (docError || !docData) {
@@ -79,22 +83,46 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("Processing document_id:", docData.id);
+
     // Split parsed text into semantic chunks
     console.log(`[RAG Pipeline] Chunking document: ${docData.id}`);
-    const chunks = chunkDocument(parseResult.pageTexts);
+    const chunks = chunkDocument(parseResult.pageTexts, docData.file_name);
 
-    // Persist new chunks with embedding = null (supporting incremental embedding generation)
-    const chunksToInsert = chunks.map(chunk => ({
+    // Batch generate embeddings for all chunks in-memory
+    const contentsToEmbed = chunks.map(chunk => stripMetadata(chunk.content));
+    console.log(`[RAG Pipeline] Generating embeddings for ${chunks.length} chunks in a single batch...`);
+    
+    let embeddings: number[][] = [];
+    try {
+      embeddings = await generateEmbeddingsBatch(contentsToEmbed);
+    } catch (embedError) {
+      console.error("[RAG Pipeline] Batch embedding generation failed. Falling back to individual generation...", embedError);
+      // Fallback: generate individually
+      embeddings = [];
+      for (const text of contentsToEmbed) {
+        try {
+          const emb = await generateEmbedding(text);
+          embeddings.push(emb);
+        } catch (e) {
+          console.error("[RAG Pipeline] Fallback embedding generation failed:", e);
+          embeddings.push([]);
+        }
+      }
+    }
+
+    // Persist new chunks populated with their embedding directly in a single query
+    const chunksToInsert = chunks.map((chunk, index) => ({
       document_id: docData.id,
       user_id: docData.user_id,
       page_number: chunk.pageNumber,
       chunk_index: chunk.chunkIndex,
       content: chunk.content,
-      embedding: null,
+      embedding: embeddings[index] && embeddings[index].length > 0 ? embeddings[index] : null,
       created_at: new Date().toISOString()
     }));
 
-    console.log(`[RAG Pipeline] Storing ${chunksToInsert.length} chunks...`);
+    console.log(`[RAG Pipeline] Storing ${chunksToInsert.length} chunks with embeddings directly...`);
     const { error: insertError } = await supabaseClient
       .from("chunks")
       .insert(chunksToInsert);
@@ -107,61 +135,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Process only chunks that do not yet have embeddings (for this document)
-    console.log(`[RAG Pipeline] Querying pending chunks needing embeddings...`);
-    const { data: pendingChunks, error: fetchError } = await supabaseClient
-      .from("chunks")
-      .select("id, content")
-      .eq("document_id", docData.id)
-      .is("embedding", null);
-
-    if (fetchError) {
-      console.error("[RAG Pipeline] Error fetching pending chunks:", fetchError);
-      return NextResponse.json(
-        { error: `Failed to fetch pending chunks: ${fetchError.message}` },
-        { status: 500 }
-      );
-    }
-
-    console.log(`[RAG Pipeline] Generating embeddings for ${pendingChunks?.length || 0} chunks...`);
-    let successCount = 0;
-    for (const chunk of pendingChunks || []) {
-      try {
-        const embedding = await generateEmbedding(chunk.content);
-
-        console.log("Embedding type:", typeof embedding);
-        console.log("Is array:", Array.isArray(embedding));
-        console.log("Length:", embedding.length);
-        console.log("First values:", embedding.slice(0,5));
-
-        const { data, error: updateError } = await supabaseClient
-          .from("chunks")
-          .update({ embedding })
-          .eq("id", chunk.id)
-          .select();
-
-        console.log("Updated row:", data);
-        console.log("Update error:", updateError);
-
-        if (updateError) {
-          console.error(`[RAG Pipeline] Error updating chunk ${chunk.id} with embedding:`, updateError);
-        } else {
-          successCount++;
-        }
-      } catch (embErr) {
-        console.error(`[RAG Pipeline] Failed to generate embedding for chunk ${chunk.id}:`, embErr);
-      }
-    }
+    console.log("Chunk count inserted:", chunksToInsert.length);
+    const successCount = embeddings.filter(emb => emb && emb.length > 0).length;
 
     const endTime = Date.now();
     const totalTimeMs = endTime - startTime;
 
     // Log metrics
     console.log("=== [RAG PIPELINE COMPLETE METRICS] ===");
-    console.log(`- File Name: ${fileName || "Unknown"}`);
+    console.log(`- File Name: ${docData.file_name || "Unknown"}`);
     console.log(`- Total Pages: ${parseResult.pages}`);
     console.log(`- Total Chunks: ${chunks.length}`);
-    console.log(`- Embeddings Generated: ${successCount}/${pendingChunks?.length || 0}`);
+    console.log(`- Embeddings Generated: ${successCount}/${chunks.length}`);
     console.log(`- Total Pipeline Execution Time: ${totalTimeMs}ms`);
     console.log("======================================================");
 
