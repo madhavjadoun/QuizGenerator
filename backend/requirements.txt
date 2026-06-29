@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+pdfplumber
+requests
+supabase
+pytesseract
+pdf2image
+pillow
+numpy

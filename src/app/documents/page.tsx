@@ -41,7 +41,7 @@ export default function DocumentsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadName, setUploadName] = useState("");
   const [progress, setProgress] = useState(0);
-
+  const [userId, setUserId] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +54,7 @@ export default function DocumentsPage() {
       // Get current user — required for user-scoped query
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
 
       const { data, error } = await supabase
         .from("documents")
@@ -105,104 +106,23 @@ export default function DocumentsPage() {
     }, 200);
 
     try {
-      // ── DIAGNOSTIC: Full session audit before storage upload ────────────────
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const session = sessionData?.session;
-      const user = session?.user ?? null;
-
-      console.group("[Documents Upload Diagnostic]");
-      console.log("Session error:", sessionError?.message ?? "none");
-      console.log("Session exists:", !!session);
-      console.log("Access token present:", !!session?.access_token);
-      console.log("Access token preview:", session?.access_token?.slice(0, 40) + "...");
-      console.log("Token expires at:", session?.expires_at ? new Date(session.expires_at * 1000).toISOString() : "N/A");
-      console.log("Token expired:", session?.expires_at ? Date.now() / 1000 > session.expires_at : "unknown");
-      console.log("Current User ID:", user?.id ?? "NULL — not authenticated");
-      console.log("Bucket:", "documents");
-      console.log("Upload path:", user ? `${user.id}/${file.name}` : "N/A");
-      console.groupEnd();
-
-      if (sessionError || !session || !user) {
+      if (!userId) {
         clearInterval(progressInterval);
         setUploading(false);
         setProgress(0);
-        console.error("[Documents Upload] Auth check failed:", sessionError);
         alert("Authentication error: You must be signed in to upload. Redirecting...");
         window.location.href = "/login";
         return;
       }
 
-      // Refresh token if near expiry
-      if (session.expires_at && Date.now() / 1000 > session.expires_at - 60) {
-        console.log("[Documents Upload] Token near expiry, refreshing...");
-        const { error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError) console.warn("[Documents Upload] Refresh failed:", refreshError.message);
-      }
+      console.log("[Documents Upload] Triggering PDF document upload and processing via FastAPI...");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("user_id", userId);
 
-      // ── Storage upload ──────────────────────────────────────────────────
-      const storagePath = `${user.id}/${file.name}`;
-      console.log("[Documents Upload] Storage path:", storagePath);
-
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from("documents")
-        .upload(storagePath, file, { cacheControl: "3600", upsert: true });
-
-      if (storageError) {
-        console.group("[Documents Upload] Storage error — full dump");
-        console.error("error.message:", storageError.message);
-        console.error("error.name:", storageError.name);
-        console.error("error (full object):", JSON.stringify(storageError, null, 2));
-        console.groupEnd();
-        throw storageError;
-      }
-
-      console.log("[Documents Upload] Storage upload succeeded:", storageData);
-
-      // ── Public URL ────────────────────────────────────────────────────
-      const { data: { publicUrl } } = supabase.storage
-        .from("documents")
-        .getPublicUrl(storagePath);
-
-      // ── DB insert ──────────────────────────────────────────────────────
-      console.log("[Documents Upload] Inserting into documents table. user_id:", user.id);
-      const { data: dbData, error: dbError } = await supabase
-        .from("documents")
-        .insert([{
-          user_id: user.id,
-          title: file.name,
-          file_name: file.name,
-          file_url: publicUrl,
-          file_size: file.size,
-          created_at: new Date().toISOString()
-        }])
-        .select("id")
-        .single();
-
-      if (dbError || !dbData) {
-        console.error("[Documents Upload] DB insert error:", JSON.stringify(dbError, null, 2));
-        throw dbError || new Error("Failed to retrieve new document ID");
-      }
-
-      const documentId = dbData.id;
-      console.log("[Documents Upload] DB insert succeeded. Generated ID:", documentId);
-
-      console.log("[Documents Upload] Triggering PDF document processing...");
-      const { data: freshSessionData, error: freshSessionError } = await supabase.auth.getSession();
-      if (freshSessionError || !freshSessionData.session) {
-        throw new Error("Unable to authenticate processing request: " + (freshSessionError?.message || "No session"));
-      }
-
-      const accessToken = freshSessionData.session.access_token;
-      const processResponse = await fetch("/api/process", {
+      const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/upload`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          storagePath,
-          documentId,
-        })
+        body: formData
       });
 
       if (!processResponse.ok) {
@@ -210,14 +130,15 @@ export default function DocumentsPage() {
         let errMsg = errText;
         try {
           const errObj = JSON.parse(errText);
-          if (errObj && typeof errObj === "object" && "error" in errObj) {
-            errMsg = String(errObj.error);
+          if (errObj && typeof errObj === "object" && "detail" in errObj) {
+            errMsg = String(errObj.detail);
           }
         } catch {}
-        throw new Error(errMsg || `Document processing failed with status: ${processResponse.status}`);
+        throw new Error(errMsg || `Document upload/processing failed with status: ${processResponse.status}`);
       }
 
-      console.log("[Documents Upload] Document processing complete.");
+      const responseData = await processResponse.json();
+      console.log("[Documents Upload] Document upload and processing complete. Response:", responseData);
 
       clearInterval(progressInterval);
       setProgress(100);
@@ -241,9 +162,7 @@ export default function DocumentsPage() {
     if (!confirm(`Are you sure you want to delete "${doc.file_name}"?`)) return;
 
     try {
-      // Get current user to verify ownership (RLS also enforces this server-side)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("You must be signed in to delete documents.");
+      if (!userId) throw new Error("You must be signed in to delete documents.");
 
       // Reconstruct the user-scoped storage path: {user_id}/{filename}
       // New uploads use this format. Legacy uploads fall back to URL parsing.
@@ -253,14 +172,14 @@ export default function DocumentsPage() {
       if (markerIndex !== -1) {
         const afterBucket = decodeURIComponent(doc.file_url.substring(markerIndex + legacyMarker.length));
         // Check if the path already starts with the user's ID (new format)
-        if (afterBucket.startsWith(user.id + "/")) {
+        if (afterBucket.startsWith(userId + "/")) {
           storagePath = afterBucket;
         } else {
           // Prefer reconstructing from user_id + filename for new-format files
-          storagePath = `${user.id}/${doc.file_name}`;
+          storagePath = `${userId}/${doc.file_name}`;
         }
       } else {
-        storagePath = `${user.id}/${doc.file_name}`;
+        storagePath = `${userId}/${doc.file_name}`;
       }
 
       // 1. Delete all chunks belonging to this document (prevent orphan data)
@@ -284,7 +203,7 @@ export default function DocumentsPage() {
         .from("documents")
         .delete()
         .eq("id", doc.id)
-        .eq("user_id", user.id); // extra safety filter
+        .eq("user_id", userId); // extra safety filter
 
       if (dbError) throw dbError;
 

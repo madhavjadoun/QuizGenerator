@@ -27,6 +27,8 @@ export default function QuizPage() {
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>("");
+  const [numQuestions, setNumQuestions] = useState<number>(10);
 
   // Fetch user's documents on mount
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function QuizPage() {
         setLoadingDocs(true);
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        setUserId(user.id);
 
         const { data: dbDocs, error } = await supabase
           .from("documents")
@@ -61,6 +64,10 @@ export default function QuizPage() {
   // Trigger quiz generation from selected PDF
   const handleGenerateQuiz = async () => {
     if (!selectedDocId) return;
+    if (numQuestions < 1) {
+      setErrorMsg("Please select a number of MCQs greater than 0.");
+      return;
+    }
     setGeneratingQuiz(true);
     setErrorMsg(null);
     setQuestions([]);
@@ -68,23 +75,34 @@ export default function QuizPage() {
     setSubmitted(false);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (!userId) {
+        throw new Error("You must be signed in to generate a quiz.");
+      }
 
-      const res = await fetch("/api/answer", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/quiz/generate`, {
         method: "POST",
-        headers,
-        body: JSON.stringify({ documentId: selectedDocId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          document_id: selectedDocId,
+          user_id: userId,
+          num_questions: numQuestions,
+        }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Quiz generation failed.");
+      if (!res.ok || !data.questions) {
+        throw new Error(data.detail || "Quiz generation failed.");
       }
 
-      setQuestions(data.questions);
+      // Map correct to correctAnswer to match frontend's type/state expectations
+      const formattedQuestions = data.questions.map((q: any) => ({
+        ...q,
+        correctAnswer: q.correct
+      }));
+
+      setQuestions(formattedQuestions);
     } catch (err) {
       console.error("Quiz error:", err);
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
@@ -119,7 +137,7 @@ export default function QuizPage() {
         {/* Setup Card */}
         <div className="glass-card rounded-xl p-6 space-y-4">
           <h2 className="text-lg font-bold text-[var(--text-1)]">Configure Your Quiz</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
             <div className="sm:col-span-2 space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-4)]">Select Document</label>
               {loadingDocs ? (
@@ -144,7 +162,18 @@ export default function QuizPage() {
                 </select>
               )}
             </div>
-            <div>
+            <div className="sm:col-span-1 space-y-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-4)]">Number of MCQs</label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(Math.min(50, parseInt(e.target.value) || 0))}
+                className="w-full h-10.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--text-2)] focus:outline-none focus:border-[var(--indigo)]"
+              />
+            </div>
+            <div className="sm:col-span-1">
               <button
                 onClick={handleGenerateQuiz}
                 disabled={generatingQuiz || documents.length === 0}
@@ -159,7 +188,7 @@ export default function QuizPage() {
                     Generating...
                   </>
                 ) : (
-                  "Generate 10 MCQs"
+                  `Generate ${numQuestions} MCQs`
                 )}
               </button>
             </div>
