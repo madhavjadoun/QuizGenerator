@@ -2,22 +2,24 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import BlurText from "@/components/ui/BlurText";
 import dynamic from "next/dynamic";
 import uploadAnimation from "../../public/upload.json";
 import OrbitLoader from "@/components/app/OrbitLoader";
+import NavbarLogo from "@/components/layout/NavbarLogo";
+import ShinyText from "@/components/ui/ShinyText";
 
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 /* ── Constants ─────────────────────────────────── */
 
 const ROTATING_WORDS = [
-  "get cited answers.",
-  "query vector chunks.",
-  "index document files.",
-  "extract key insights."
+  "build quizzes.",
+  "practice smarter.",
+  "master concepts.",
+  "learn faster."
 ];
 
 const letterVariants = {
@@ -35,94 +37,72 @@ const letterVariants = {
 };
 
 const EXAMPLE_QUESTIONS = [
-  "Summarize this document",
-  "Generate MCQs",
-  "Create revision notes",
-  "Explain like I'm a beginner",
-  "Extract key findings",
-  "Find important formulas",
-  "Generate interview questions",
-  "Compare two documents",
+  "Operating Systems",
+  "DBMS",
+  "Computer Networks",
+  "DSA",
+  "Machine Learning",
+  "Physics",
+  "Biology",
+  "Chemistry",
+  "History",
 ];
 
-const AI_RESPONSE_POOL = [
-  {
-    answer: "Based on the uploaded research paper, the key findings show that sparse attention networks decrease computational overhead by 40% while preserving 98% accuracy in sequence-to-sequence model tests.",
-    source: "Attention_Research_Paper.pdf",
-    score: "98%",
-    ms: "115ms",
-    retrieved_chunks: "3",
-  },
-  {
-    answer: "This PDF contains a comprehensive description of quantum entanglement. In simple terms, it explains how paired particles remain connected across distances, exchanging states instantaneously without violating local constraints.",
-    source: "Quantum_Physics_Intro.pdf",
-    score: "95%",
-    ms: "140ms",
-    retrieved_chunks: "4",
-  },
-  {
-    answer: "The key findings in this document show a 14% year-over-year revenue increase, driven primarily by enterprise SaaS subscriptions, though marketing acquisition costs rose by 8.4%.",
-    source: "Q2_Financials_Report.pdf",
-    score: "97%",
-    ms: "110ms",
-    retrieved_chunks: "2",
-  },
-  {
-    answer: "Comparing both files: API_v1.json uses RESTful endpoints and traditional query params, whereas API_v2.md implements a GraphQL gateway, resulting in 30% fewer network hops for nested entities.",
-    source: "API_Architecture_Compare.md",
-    score: "94%",
-    ms: "185ms",
-    retrieved_chunks: "3",
-  },
-  {
-    answer: "Study Plan: Week 1: Study vector spaces and metrics (Cosine, L2). Week 2: Configure pgvector indexes on local PostgreSQL tables. Week 3: Implement langchain splits and semantic ingestion loops.",
-    source: "Vector_DB_Learning_Guide.md",
-    score: "96%",
-    ms: "138ms",
-    retrieved_chunks: "3",
-  },
-  {
-    answer: "The Prisma schema defines the database structure. It maps three model classes (User, Document, VectorChunk) directly to PostgreSQL relational tables, ensuring rigid compile-time type validation.",
-    source: "schema.prisma",
-    score: "98%",
-    ms: "92ms",
-    retrieved_chunks: "2",
-  },
-  {
-    answer: "The RAG pipeline operates by: 1. Parsing user inputs into queries. 2. Querying pgvector for nearest context fragments. 3. Merging queries and contexts to format LLM system prompts.",
-    source: "RAG_Knowledge_Flow.md",
-    score: "97%",
-    ms: "112ms",
-    retrieved_chunks: "3",
-  },
-  {
-    answer: "Comparing OpenAI text-embedding-3-small and Cohere v3 models: Cohere excels at multi-lingual token representations, whereas OpenAI text-embedding-3 shows 12% faster query indexing latencies.",
-    source: "Embedding_Model_Comparisons.pdf",
-    score: "94%",
-    ms: "172ms",
-    retrieved_chunks: "4",
-  },
-  {
-    answer: "Prisma Schema exports the postgres connector specs: url = env('DATABASE_URL') and provider = 'postgresql'. It supports local ssl connections and connection pool parameter overrides.",
-    source: "db_connection.prisma",
-    score: "99%",
-    ms: "82ms",
-    retrieved_chunks: "2",
+
+
+const FooterLink = ({ href, text, onClick, target, rel }: { href?: string; text: string; onClick?: () => void; target?: string; rel?: string }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const content = (
+    <ShinyText
+      text={text}
+      disabled={!isHovered}
+      color={isHovered ? "var(--indigo-accent)" : "var(--text-2)"}
+      shineColor="#ffffff"
+      speed={0.8}
+      spread={60}
+      delay={2}
+    />
+  );
+
+  const classes = "footer-link-shine cursor-pointer text-left flex items-center text-sm transition-all duration-300 hover:translate-x-0.5";
+
+  if (onClick) {
+    return (
+      <button
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={onClick}
+        className={classes}
+      >
+        {content}
+      </button>
+    );
   }
-];
 
-const STATS = [
-  { value: "< 150ms", label: "Query latency" },
-  { value: "10k+", label: "Indexed pages" },
-  { value: "99.4%", label: "Search recall" },
-  { value: "AES-256", label: "Local security" },
-];
+  return (
+    <a
+      href={href}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      target={target}
+      rel={rel}
+      className={classes}
+    >
+      {content}
+    </a>
+  );
+};
 
 /* ── Component ──────────────────────────────────── */
 
 export default function WelcomePage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const isHeroInView = useInView(heroRef, { once: false, amount: 0.15 });
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isSectionInView = useInView(sectionRef, { once: false, amount: 0.15 });
 
   const [mounted, setMounted] = useState(false);
 
@@ -134,24 +114,8 @@ export default function WelcomePage() {
   // Rotating word
   const [wordIndex, setWordIndex] = useState(0);
 
-  // AI demo
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [typedAnswer, setTypedAnswer] = useState("");
-  const [demoReady, setDemoReady] = useState(false);
-
-  // Active question chip & custom pool states
-  const [activeQ, setActiveQ] = useState<number | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState("What is the RAG knowledge flow in my docs?");
-  const [currentSource, setCurrentSource] = useState("RAG_Knowledge_Flow.md");
-  const [currentScore, setCurrentScore] = useState("94%");
-  const [currentMs, setCurrentMs] = useState("140ms");
-  const [currentRetrieval, setCurrentRetrieval] = useState("3");
-
-
   // Shuffled visible questions
   const [visibleQuestions, setVisibleQuestions] = useState<string[]>([]);
-
-  const typeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /* Welcome page theme initialization */
   useEffect(() => {
@@ -170,10 +134,10 @@ export default function WelcomePage() {
     checkAuth();
   }, [router]);
 
-  /* Shuffling 4 user-focused questions on refresh */
+  /* Shuffling 5 user-focused questions on refresh */
   useEffect(() => {
     const shuffled = [...EXAMPLE_QUESTIONS].sort(() => 0.5 - Math.random());
-    setVisibleQuestions(shuffled.slice(0, 4));
+    setVisibleQuestions(shuffled.slice(0, 5));
   }, []);
 
   /* Rotate words every 2.0s */
@@ -182,52 +146,7 @@ export default function WelcomePage() {
     return () => clearInterval(iv);
   }, []);
 
-  const triggerTypeEffect = (fullAnswer: string) => {
-    setShowAnswer(true);
-    setDemoReady(false);
-    setTypedAnswer("");
-    let i = 0;
 
-    if (typeIntervalRef.current) {
-      clearInterval(typeIntervalRef.current);
-    }
-
-    typeIntervalRef.current = setInterval(() => {
-      i += 4;
-      setTypedAnswer(fullAnswer.slice(0, i));
-      if (i >= fullAnswer.length) {
-        clearInterval(typeIntervalRef.current!);
-        setDemoReady(true);
-      }
-    }, 18);
-  };
-
-  /* Auto-play AI demo on mount */
-  useEffect(() => {
-    const t1 = setTimeout(() => {
-      triggerTypeEffect("RAG embeds your query into a vector, retrieves the top-k similar chunks from pgvector, then feeds those as context to the LLM — giving you grounded, accurate answers straight from your own documents.");
-    }, 1200);
-    return () => {
-      clearTimeout(t1);
-      if (typeIntervalRef.current) clearInterval(typeIntervalRef.current);
-    };
-  }, []);
-
-  const handleQuestionClick = (q: string, idx: number) => {
-    setActiveQ(idx);
-    setCurrentQuestion(q);
-
-    // Pick a random response from the pool
-    const randomIndex = Math.floor(Math.random() * AI_RESPONSE_POOL.length);
-    const response = AI_RESPONSE_POOL[randomIndex];
-
-    setCurrentSource(response.source);
-    setCurrentScore(response.score);
-    setCurrentMs(response.ms);
-    setCurrentRetrieval(response.retrieved_chunks);
-
-    triggerTypeEffect(response.answer);
-  };
 
   /* Upload logic */
   const uploadFileToSupabase = async (file: File) => {
@@ -395,45 +314,35 @@ export default function WelcomePage() {
       <div className="aurora-br" />
       <div className="aurora-accent" />
 
+
+
       {/* Top Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-10 lg:px-16 py-5 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0 border border-[var(--border)]"
-            style={{
-              background: "var(--logo-bg)",
-              boxShadow: "var(--logo-shadow)",
-            }}
-          >
-            <svg className="w-4 h-4 text-[var(--bg)] dark:text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-[var(--text-1)]">
-            KnowledgeSearch
-          </span>
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 sm:px-12 lg:px-20 py-5 border-b border-[var(--border)] bg-[var(--surface)] backdrop-blur-md">
+        <div className="flex items-center">
+          <NavbarLogo />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-5">
           <button
             onClick={() => router.push("/login")}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg border border-[var(--border)] transition-all cursor-pointer hover:bg-[var(--bg-2)] text-[var(--text-2)]"
+            className="text-xs font-semibold px-4 py-2 rounded-lg border border-[var(--border)] transition-all duration-[250ms] cursor-pointer hover:bg-[var(--bg-2)] hover:text-[var(--text-1)] hover:-translate-y-0.5 shadow-sm active:translate-y-0"
           >
             Sign in
           </button>
 
           <button
             onClick={() => router.push("/login")}
-            className="grad-btn px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+            className="grad-btn px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-[250ms] hover:-translate-y-0.5 flex items-center gap-1.5 group shadow-sm active:translate-y-0"
           >
             Get started
+            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
           </button>
         </div>
       </div>
 
       {/* Main Grid */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto flex items-center min-h-screen px-8 sm:px-12 lg:px-20 pt-24 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-[72px] w-full items-start">
+      <motion.div ref={heroRef} className="relative z-10 w-full max-w-7xl mx-auto flex flex-col justify-center px-4 sm:px-12 lg:px-20 pt-20 pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-[72px] w-full items-start">
 
           {/* LEFT — Content Column (5 cols) */}
           <div className="lg:col-span-5 flex flex-col gap-6.5 max-w-[530px] lg:max-w-none">
@@ -441,16 +350,16 @@ export default function WelcomePage() {
             {/* Title with integrated rotating text */}
             <div>
               <h1
-                className="text-[36px] sm:text-[48px] lg:text-[60px] font-bold leading-[1.0] text-[var(--text-1)]"
+                className="text-[30px] xs:text-[34px] sm:text-[48px] lg:text-[60px] font-bold leading-[1.0] text-[var(--text-1)]"
                 style={{ letterSpacing: "-0.03em" }}
               >
                 <BlurText
-                  text="Ask questions across"
+                  text="Turn any document"
                   delay={40}
                 />{" "}
                 <br className="hidden sm:inline" />
                 <BlurText
-                  text="your documents to"
+                  text="into an AI quiz to"
                   delay={40}
                   className="mr-2"
                 />
@@ -458,7 +367,8 @@ export default function WelcomePage() {
                   <AnimatePresence mode="popLayout">
                     <motion.span
                       key={wordIndex}
-                      className="inline-block"
+                      className="inline-block will-change-[transform,opacity,filter]"
+                      style={{ willChange: "transform, opacity, filter" }}
                       initial="initial"
                       animate="animate"
                       exit="exit"
@@ -475,11 +385,12 @@ export default function WelcomePage() {
                               stiffness: 400,
                               delay: delay
                             }}
-                            className="inline-block"
+                            className="inline-block will-change-[transform,opacity,filter]"
                             style={{
                               display: "inline-block",
                               whiteSpace: "pre",
                               color: "var(--indigo-accent)",
+                              willChange: "transform, opacity, filter"
                             }}
                           >
                             {char}
@@ -494,162 +405,68 @@ export default function WelcomePage() {
               {/* Subheading with BlurText */}
               <p className="text-[18px] lg:text-[20px] font-normal leading-[1.6] text-[var(--text-2)] mt-4 max-w-[640px]">
                 <BlurText
-                  text="Upload PDFs, notes, research papers, and spreadsheets to build a searchable knowledge index. Ask questions in natural language and receive grounded, cited answers."
+                  text="Upload searchable or scanned PDFs, lecture slides, and notes. Our OCR pipeline extracts the text, chunks the content, and generates interactive MCQ practice tests in seconds."
                   delay={45}
                 />
               </p>
 
+            </div>
+
+            {/* Categories & Trust Strip Container */}
+            <motion.div
+              initial="hidden"
+              animate={isHeroInView ? "visible" : "hidden"}
+              variants={{
+                hidden: { opacity: 0, y: 15, transition: { duration: 0 } },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.2 } }
+              }}
+              className="space-y-6"
+            >
               {/* Trust Strip */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-mono uppercase tracking-wider text-[var(--text-4)] mt-5 pt-3.5 border-t border-[var(--border)]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-mono uppercase tracking-wider text-[var(--text-4)] pt-3.5 border-t border-[var(--border)]">
                 <span>Private</span>
                 <span className="text-[var(--border)]">·</span>
-                <span>Local First</span>
+                <span>OCR Scanning</span>
                 <span className="text-[var(--border)]">·</span>
-                <span>Source Citations</span>
+                <span>Instant MCQs</span>
                 <span className="text-[var(--border)]">·</span>
-                <span>Semantic Search</span>
+                <span>Study Aids</span>
               </div>
-            </div>
 
-            {/* Inline query chips */}
-            <div className="space-y-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-4)]">
-                ✦ Try asking your documents
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {visibleQuestions.map((q, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleQuestionClick(q, i)}
-                    className="text-[11px] px-2.5 py-1 rounded-full font-medium transition-all duration-150 cursor-pointer border"
-                    style={{
-                      background: activeQ === i ? "var(--indigo)" : "var(--surface)",
-                      borderColor: activeQ === i ? "var(--indigo)" : "var(--border)",
-                      color: activeQ === i ? "var(--text-inv)" : "var(--text-2)",
-                    }}
-                    onMouseEnter={e => {
-                      if (activeQ !== i) {
-                        e.currentTarget.style.borderColor = "var(--border-strong)";
-                        e.currentTarget.style.color = "var(--text-1)";
-                        e.currentTarget.style.background = "var(--bg-2)";
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (activeQ !== i) {
-                        e.currentTarget.style.borderColor = "var(--border)";
-                        e.currentTarget.style.color = "var(--text-2)";
-                        e.currentTarget.style.background = "var(--surface)";
-                      }
-                    }}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Semantic Preview Card */}
-            <div
-              className="glass-card rounded-xl p-4 space-y-3.5"
-            >
-              <div
-                className="flex items-center justify-between pb-2.5 border-b border-[var(--border)]"
-              >
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-4)]">Semantic Preview</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    ● Ready
-                  </span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-2)] text-[var(--text-3)]">
-                    {currentMs}
-                  </span>
+              {/* Inline query chips */}
+              <div className="space-y-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-4)]">
+                  ✦ Practice Categories
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {visibleQuestions.map((q, i) => (
+                    <span
+                      key={i}
+                      className="text-[11px] px-2.5 py-1 rounded-full font-medium transition-all duration-150 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-2)] hover:border-[var(--border-strong)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] cursor-default select-none"
+                    >
+                      {q}
+                    </span>
+                  ))}
                 </div>
               </div>
+            </motion.div>
 
-              {/* User question */}
-              <div className="flex justify-end">
-                <div className="chat-user-bubble px-3.5 py-2.5 text-xs max-w-full font-medium">
-                  {currentQuestion}
-                </div>
-              </div>
 
-              {/* AI response */}
-              <div className="flex justify-start">
-                <div className="chat-ai-bubble px-3.5 py-2.5 text-xs w-full">
-                  {showAnswer ? (
-                    <div className="space-y-3">
-                      <p className="leading-relaxed text-[var(--text-2)]">
-                        {typedAnswer}
-                        {!demoReady && (
-                          <span
-                            className="inline-block w-[2px] h-3.5 ml-0.5 align-middle animate-pulse bg-blue-600"
-                          />
-                        )}
-                      </p>
-                      {demoReady && (
-                        <div
-                          className="flex items-center justify-between border-t border-[var(--border)] pt-2.5 flex-wrap gap-2 text-[10px]"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-[var(--text-4)]">Source:</span>
-                            <span className="px-1.5 py-0.5 rounded bg-blue-500/5 text-blue-600 dark:text-blue-400 border border-blue-500/10 font-medium">
-                              📄 {currentSource}
-                            </span>
-                          </div>
 
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                              <span className="font-bold text-[var(--text-4)]">Chunks:</span>
-                              <span className="font-mono font-bold text-[var(--text-2)]">{currentRetrieval}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-bold text-[var(--text-4)]">Confidence:</span>
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
-                                {currentScore}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="space-y-2.5 py-1">
-                      {[100, 85, 60].map((w, i) => (
-                        <div
-                          key={i}
-                          className="h-2 rounded bg-[var(--bg-2)] animate-pulse"
-                          style={{ width: `${w}%` }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
 
-            {/* Stats strip */}
-            <div
-              className="glass-card rounded-xl grid grid-cols-4 gap-2.5 px-3 py-3.5"
-            >
-              {STATS.map((s, i) => (
-                <div key={i} className="text-center">
-                  <p
-                    className="text-base font-bold text-[var(--text-1)]"
-                    style={{ letterSpacing: "-0.02em" }}
-                  >
-                    {s.value}
-                  </p>
-                  <p className="text-[9px] text-[var(--text-4)] font-bold uppercase mt-0.5 tracking-wider">
-                    {s.label}
-                  </p>
-                </div>
-              ))}
-            </div>
 
           </div>
 
           {/* RIGHT — Hero Upload/Ingestion Box (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col justify-center w-full">
+          <motion.div
+            initial="hidden"
+            animate={isHeroInView ? "visible" : "hidden"}
+            variants={{
+              hidden: { opacity: 0, x: 25, transition: { duration: 0 } },
+              visible: { opacity: 1, x: 0, transition: { type: "spring", damping: 20, stiffness: 80, delay: 0.1 } }
+            }}
+            className="lg:col-span-7 flex flex-col justify-center w-full"
+          >
             <div className="w-full max-w-[540px] mx-auto lg:ml-auto lg:mr-0 glass-card rounded-xl overflow-hidden">
 
               {/* Card Header */}
@@ -658,10 +475,10 @@ export default function WelcomePage() {
               >
                 <div>
                   <h3 className="text-sm font-semibold text-[var(--text-1)]">
-                    AI Knowledge Ingestion
+                    AI Quiz Generator
                   </h3>
                   <p className="text-[10px] text-[var(--text-3)] mt-0.5">
-                    Select PDFs, markdown files, or plaintext to chunk and index.
+                    Select searchable or scanned PDFs to generate practice tests.
                   </p>
                 </div>
 
@@ -682,9 +499,8 @@ export default function WelcomePage() {
                   onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                   onDragLeave={() => setDragging(false)}
                   onDrop={onDrop}
-                  className="rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative p-6 bg-[var(--bg-2)]/30 group"
+                  className="rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 border-2 border-dashed relative p-4 sm:p-6 bg-[var(--bg-2)]/30 group min-h-[160px] sm:min-h-[200px]"
                   style={{
-                    minHeight: "200px",
                     borderColor: dragging ? "var(--indigo)" : dropped ? "#16A34A" : "var(--border-strong)",
                   }}
                 >
@@ -694,7 +510,7 @@ export default function WelcomePage() {
                         <>
                           <OrbitLoader size={40} />
                           <p className="text-xs font-semibold text-[var(--text-1)]">
-                            Indexing <span className="text-[var(--text-2)]">{dropped}</span>
+                            Generating Quiz <span className="text-[var(--text-2)]">{dropped}</span>
                           </p>
                           <div className="w-full">
                             <div className="h-1 rounded-full overflow-hidden bg-[var(--bg-3)]">
@@ -714,9 +530,9 @@ export default function WelcomePage() {
                             </svg>
                           </div>
                           <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            Document Ingestion Completed
+                            Quiz Generation Completed
                           </p>
-                          <p className="text-[9px] text-[var(--text-4)] font-mono">Vector embeddings synced to pgvector</p>
+                          <p className="text-[9px] text-[var(--text-4)] font-mono">Practice quiz ready for review</p>
                           <p className="text-xs text-[var(--text-3)]">Opening dashboard…</p>
                         </>
                       )}
@@ -740,13 +556,13 @@ export default function WelcomePage() {
                         )}
                       </div>
                       <p className="text-xs font-semibold text-[var(--text-2)]">
-                        {dragging ? "Release to drop file" : "Drag and drop your file here"}
+                        {dragging ? "Release to drop file" : "Drag and drop your PDF here"}
                       </p>
                       <p className="text-[10px] text-[var(--text-4)] mt-0.5">
                         or click to browse local files
                       </p>
                       <span className="text-[8px] font-mono bg-[var(--bg-2)] px-2 py-0.5 rounded mt-3 text-[var(--text-3)]">
-                        PDF, TXT, MD, SQL, PY, JSON (Max 10MB)
+                        Searchable & Scanned PDFs (Max 25MB)
                       </span>
                     </div>
                   )}
@@ -754,7 +570,7 @@ export default function WelcomePage() {
                   <input
                     ref={fileRef}
                     type="file"
-                    accept=".pdf,.txt,.md,.sql,.py,.json"
+                    accept=".pdf"
                     className="hidden"
                     onChange={onFileChange}
                   />
@@ -776,16 +592,16 @@ export default function WelcomePage() {
                 {/* Pipeline visualizer */}
                 <div className="space-y-2">
                   <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-4)]">
-                    Ingestion Pipeline
+                    Quiz Generation Pipeline
                   </p>
 
                   <div className="flex items-center justify-between text-[9px] font-mono py-2.5 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-2)]/30">
                     {[
-                      { name: "File", min: 0, max: 20 },
-                      { name: "Chunking", min: 20, max: 50 },
-                      { name: "Embedding", min: 50, max: 80 },
-                      { name: "Retrieval", min: 80, max: 100 },
-                      { name: "Answer", min: 100, max: 100 }
+                      { name: "Upload", min: 0, max: 20 },
+                      { name: "OCR", min: 20, max: 50 },
+                      { name: "Chunking", min: 50, max: 80 },
+                      { name: "AI Quiz", min: 80, max: 100 },
+                      { name: "Ready", min: 100, max: 100 }
                     ].map((st, idx, arr) => {
                       const isStepActive = progress >= st.min && progress < st.max;
                       const isStepCompleted = progress >= st.max;
@@ -823,7 +639,7 @@ export default function WelcomePage() {
                 {/* Pipeline Log */}
                 <div className="space-y-1.5">
                   <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-4)]">
-                    Stream Pipeline Log
+                    Quiz Generation Log
                   </p>
 
                   <div className="space-y-1.5 font-mono text-[9px] p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-2)]/30 text-[var(--text-3)] min-h-[64px]">
@@ -834,16 +650,16 @@ export default function WelcomePage() {
                           <span className="font-bold text-[var(--text-2)]">{progress}%</span>
                         </div>
                         <div className="leading-relaxed whitespace-pre font-medium text-[8px] text-[var(--text-4)]">
-                          {`> Parsing uploaded document... OK`}
-                          {progress >= 20 && `\n> Splitting chunks... Done`}
-                          {progress >= 50 && `\n> Generating vector embeddings... Done`}
-                          {progress >= 80 && `\n> Storing in vector database... Ready`}
+                          {`> Uploading and scanning document... OK`}
+                          {progress >= 20 && `\n> Running OCR text extraction... Done`}
+                          {progress >= 50 && `\n> Splitting text into context chunks... Done`}
+                          {progress >= 80 && `\n> Generating MCQs via Gemini AI... Ready`}
                         </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-2.5 text-center text-[var(--text-4)]">
-                        <p className="font-medium">No knowledge indexed yet</p>
-                        <p className="text-[8px] mt-0.5 text-[var(--text-4)]">Upload your first document to begin.</p>
+                        <p className="font-medium">No quiz generated yet</p>
+                        <p className="text-[8px] mt-0.5 text-[var(--text-4)]">Upload a PDF to generate a practice quiz.</p>
                       </div>
                     )}
                   </div>
@@ -851,15 +667,23 @@ export default function WelcomePage() {
 
                 {/* Card Footer */}
                 <div
-                  className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-[10px] text-[var(--text-4)]"
+                  className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-[10px] text-[var(--text-4)] gap-2"
                 >
-                  <span>
-                    Storage status: Active
-                  </span>
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold text-[8px] uppercase tracking-wider border border-emerald-500/10">
+                      OCR Ready
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-[var(--indigo)]/10 text-[var(--indigo)] dark:text-[var(--indigo-accent)] font-semibold text-[8px] uppercase tracking-wider border border-[var(--indigo)]/10">
+                      AI Powered
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-[8px] uppercase tracking-wider border border-amber-500/10">
+                      10–50 MCQs
+                    </span>
+                  </div>
 
                   <button
                     onClick={() => router.push("/dashboard")}
-                    className="font-semibold text-[var(--text-2)] hover:underline cursor-pointer"
+                    className="font-semibold text-[var(--text-2)] hover:underline cursor-pointer flex-shrink-0"
                   >
                     Open dashboard →
                   </button>
@@ -867,11 +691,315 @@ export default function WelcomePage() {
 
               </div>
             </div>
-          </div>
-          {/* END right column */}
-
+          </motion.div>
         </div>
-      </div>
-    </div>
-  );
+
+      {/* How It Works Section */}
+      <motion.div
+        ref={sectionRef}
+        initial="hidden"
+        animate={isSectionInView ? "visible" : "hidden"}
+        variants={{
+          hidden: { opacity: 0, y: 15, transition: { duration: 0 } },
+          visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+              duration: 0.5,
+              staggerChildren: 0.12
+            }
+          }
+        }}
+        className="w-full mt-16 sm:mt-24 space-y-10 relative"
+      >
+        {/* Section Header */}
+        <div className="text-center space-y-2.5">
+          <h3 className="text-lg font-bold text-[var(--text-1)] tracking-tight">
+            How It Works
+          </h3>
+          <p className="text-xs text-[var(--text-3)] max-w-lg mx-auto">
+            Turn any document into high-yield interactive practice tests in four simple steps
+          </p>
+        </div>
+
+        {/* Stepper Grid Container */}
+        <div className="relative">
+          
+          {/* Horizontal dashed connector line for desktop */}
+          <div className="absolute top-[52px] left-[12%] right-[12%] h-[2px] hidden lg:block z-0">
+            <svg className="w-full h-[2px]">
+              <motion.line
+                x1="0%"
+                y1="50%"
+                x2="100%"
+                y2="50%"
+                stroke="url(#line-grad-horizontal)"
+                strokeWidth="2"
+                strokeDasharray="6 6"
+                variants={{
+                  hidden: { pathLength: 0, transition: { duration: 0 } },
+                  visible: { pathLength: 1, transition: { duration: 1.6, ease: [0.25, 1, 0.5, 1], delay: 0.25 } }
+                }}
+              />
+              <defs>
+                <linearGradient id="line-grad-horizontal" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="var(--indigo)" />
+                  <stop offset="50%" stopColor="var(--indigo-accent)" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor="var(--emerald-500)" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Vertical dashed connector line for mobile */}
+          <div className="absolute left-[50px] top-12 bottom-12 w-[2px] block md:hidden z-0">
+            <svg className="w-[2px] h-full">
+              <motion.line
+                x1="50%"
+                y1="0%"
+                x2="50%"
+                y2="100%"
+                stroke="url(#line-grad-vertical)"
+                strokeWidth="2"
+                strokeDasharray="6 6"
+                variants={{
+                  hidden: { pathLength: 0, transition: { duration: 0 } },
+                  visible: { pathLength: 1, transition: { duration: 1.6, ease: [0.25, 1, 0.5, 1] } }
+                }}
+              />
+              <defs>
+                <linearGradient id="line-grad-vertical" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--indigo)" />
+                  <stop offset="50%" stopColor="var(--indigo-accent)" stopOpacity="0.7" />
+                  <stop offset="100%" stopColor="var(--emerald-500)" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Steps Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+
+            {/* Step 1 */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 25, transition: { duration: 0 } },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 80 } }
+              }}
+              whileHover={{ y: -5, transition: { type: "spring", damping: 20, stiffness: 200 } }}
+              className="glass-card rounded-xl p-6 flex flex-row lg:flex-col items-center text-left lg:text-center gap-4 lg:gap-0 lg:space-y-4 relative z-10 group overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[var(--indigo-accent)]/5 hover:border-[var(--indigo)]/20"
+            >
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                className="h-13 w-13 rounded-2xl flex items-center justify-center bg-indigo-500/10 border border-indigo-500/20 text-[var(--indigo-accent)] shadow-sm flex-shrink-0 group-hover:rotate-[4deg] transition-transform duration-300"
+              >
+                <svg className="w-6.5 h-6.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </motion.div>
+
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-[var(--text-1)]">Upload PDF</h4>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                  Supports searchable and scanned PDFs
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Step 2 */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 25, transition: { duration: 0 } },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 80 } }
+              }}
+              whileHover={{ y: -5, transition: { type: "spring", damping: 20, stiffness: 200 } }}
+              className="glass-card rounded-xl p-6 flex flex-row lg:flex-col items-center text-left lg:text-center gap-4 lg:gap-0 lg:space-y-4 relative z-10 group overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[var(--indigo-accent)]/5 hover:border-[var(--indigo)]/20"
+            >
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.2 }}
+                className="h-13 w-13 rounded-2xl flex items-center justify-center bg-indigo-500/10 border border-indigo-500/20 text-[var(--indigo-accent)] shadow-sm flex-shrink-0 group-hover:rotate-[4deg] transition-transform duration-300"
+              >
+                <svg className="w-6.5 h-6.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1m-1.636 6.364l-.707-.707M12 20v1m-6.364-1.636l.707-.707M3 12h1m1.636-6.364l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                </svg>
+              </motion.div>
+
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-[var(--text-1)]">AI Processing</h4>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                  OCR + smart text extraction
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Step 3 */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 25, transition: { duration: 0 } },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 80 } }
+              }}
+              whileHover={{ y: -5, transition: { type: "spring", damping: 20, stiffness: 200 } }}
+              className="glass-card rounded-xl p-6 flex flex-row lg:flex-col items-center text-left lg:text-center gap-4 lg:gap-0 lg:space-y-4 relative z-10 group overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[var(--indigo-accent)]/5 hover:border-[var(--indigo)]/20"
+            >
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.4 }}
+                className="h-13 w-13 rounded-2xl flex items-center justify-center bg-indigo-500/10 border border-indigo-500/20 text-[var(--indigo-accent)] shadow-sm flex-shrink-0 group-hover:rotate-[4deg] transition-transform duration-300"
+              >
+                <svg className="w-6.5 h-6.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </motion.div>
+
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-[var(--text-1)]">Generate Quiz</h4>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                  Create 10–50 AI-generated MCQs
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Step 4 */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 25, transition: { duration: 0 } },
+                visible: { opacity: 1, y: 0, transition: { type: "spring", damping: 20, stiffness: 80 } }
+              }}
+              whileHover={{ y: -5, transition: { type: "spring", damping: 20, stiffness: 200 } }}
+              className="glass-card rounded-xl p-6 flex flex-row lg:flex-col items-center text-left lg:text-center gap-4 lg:gap-0 lg:space-y-4 relative z-10 group overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[var(--indigo-accent)]/5 hover:border-[var(--indigo)]/20"
+            >
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 0.6 }}
+                className="h-13 w-13 rounded-2xl flex items-center justify-center bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-sm flex-shrink-0 group-hover:rotate-[4deg] transition-transform duration-300"
+              >
+                <svg className="w-6.5 h-6.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </motion.div>
+
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-[var(--text-1)]">Practice & Learn</h4>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">
+                  Instant scoring with explanations
+                </p>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Professional Footer */}
+      <footer className="w-full mt-24 border-t border-[var(--border)] pt-12 pb-8 bg-[var(--surface)]/30 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-12 lg:px-20">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 pb-10">
+            {/* Logo and Brand details */}
+            <div className="md:col-span-5 space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 flex-shrink-0 animate-footer-logo-idle footer-logo-sweep">
+                  <img
+                    src="/logo-icon.png"
+                    alt="QuizGenerator Logo"
+                    className="w-full h-full object-contain dark:invert dark:hue-rotate-180"
+                  />
+                </div>
+                <span className="text-base font-bold tracking-tight text-[var(--text-1)]">
+                  QuizGenerator
+                </span>
+              </div>
+              <p className="text-sm text-[var(--text-3)] leading-relaxed max-w-[280px] font-normal">
+                Generate high-quality practice quizzes directly from searchable and scanned PDFs with smart text extraction.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div className="md:col-span-3 space-y-4">
+              <h5 className="text-sm font-bold uppercase tracking-wider text-[var(--text-1)]">Quick Links</h5>
+              <ul className="space-y-3 font-normal">
+                <li>
+                  <FooterLink 
+                    onClick={() => router.push("/")} 
+                    text="Home"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    onClick={() => router.push("/dashboard")} 
+                    text="Dashboard"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    onClick={() => router.push("/")} 
+                    text="Upload"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    onClick={() => router.push("/")} 
+                    text="Generate Quiz"
+                  />
+                </li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div className="md:col-span-2 space-y-4">
+              <h5 className="text-sm font-bold uppercase tracking-wider text-[var(--text-1)]">Resources</h5>
+              <ul className="space-y-3 font-normal">
+                <li>
+                  <FooterLink 
+                    href="#" 
+                    text="Privacy Policy"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    href="#" 
+                    text="Terms of Service"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    href="#" 
+                    text="Contact Us"
+                  />
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact details */}
+            <div className="md:col-span-2 space-y-4">
+              <h5 className="text-sm font-bold uppercase tracking-wider text-[var(--text-1)]">Connect</h5>
+              <ul className="space-y-3 font-normal">
+                <li>
+                  <FooterLink 
+                    href="https://github.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    text="GitHub"
+                  />
+                </li>
+                <li>
+                  <FooterLink 
+                    href="mailto:support@quizgenerator.com" 
+                    text="Email"
+                  />
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Copyright */}
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-[var(--border)] text-xs text-[var(--text-4)] font-medium">
+            <p>© 2026 QuizGenerator. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </motion.div>
+  </div>
+);
 }

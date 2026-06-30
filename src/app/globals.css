@@ -185,15 +185,19 @@ p { color: var(--text-3); }
 
 .glass-card {
   background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-xs);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
 }
 .glass-card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-3px);
 }
 
 /* ══════════════════════════════════════
@@ -407,14 +411,14 @@ p { color: var(--text-3); }
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.65rem;
-  border-radius: 6px;
-  font-size: 0.86rem;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
   font-weight: 500;
-  color: var(--text-2);
+  color: var(--text-3);
   text-decoration: none;
-  transition: all 0.12s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
   width: 100%;
   text-align: left;
@@ -426,19 +430,26 @@ p { color: var(--text-3); }
   background: var(--bg-2);
 }
 .nav-item.active {
-  color: var(--text-1);
+  color: var(--indigo);
   font-weight: 600;
-  background: var(--bg-2);
-  border-color: var(--border);
+  background: color-mix(in srgb, var(--indigo) 8%, transparent);
+  border-color: color-mix(in srgb, var(--indigo) 15%, transparent);
 }
 
-.lottie-menu-btn svg path {
-  stroke: var(--text-2) !important;
-  fill: none !important;
-  transition: stroke 0.12s ease;
-}
-.lottie-menu-btn:hover svg path {
+.lottie-menu-btn svg path,
+.lottie-menu-btn svg g {
   stroke: var(--text-1) !important;
+  stroke-width: 2.2px !important;
+  fill: var(--text-1) !important;
+  opacity: 1 !important;
+  stroke-opacity: 1 !important;
+  fill-opacity: 1 !important;
+  transition: stroke 0.12s ease, fill 0.12s ease;
+}
+.lottie-menu-btn:hover svg path,
+.lottie-menu-btn:hover svg g {
+  stroke: var(--text-1) !important;
+  fill: var(--text-1) !important;
 }
 
 .lottie-loader svg path {
@@ -460,3 +471,84 @@ p { color: var(--text-3); }
 .group:hover .lottie-upload svg path[fill] {
   fill: var(--indigo) !important;
 }
+
+/* ── Footer Logo Animations ── */
+@keyframes footer-logo-idle {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 0px rgba(99, 102, 241, 0)) brightness(1);
+  }
+  40% {
+    transform: translateY(-2px) scale(1.006);
+    filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.2)) brightness(1.02);
+  }
+  50% {
+    transform: translateY(-2.5px) scale(1.008);
+    filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.3)) brightness(1.03);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.006);
+    filter: drop-shadow(0 0 2px rgba(99, 102, 241, 0.2)) brightness(1.02);
+  }
+}
+
+.animate-footer-logo-idle {
+  animation: footer-logo-idle 6s infinite ease-in-out;
+}
+
+.footer-logo-sweep {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-logo-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  transform: translateX(-100%);
+  animation: footer-logo-sweep-anim 4s infinite ease-in-out;
+  mask-image: url('/logo-icon.png');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: url('/logo-icon.png');
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  pointer-events: none;
+}
+
+@keyframes footer-logo-sweep-anim {
+  0% {
+    transform: translateX(-100%);
+  }
+  25%, 100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Footer Link Shine & Weight ── */
+.footer-link-shine {
+  font-weight: 500;
+  transition: transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.footer-link-shine:hover {
+  transform: translateX(2px);
+}
+
+.shiny-text {
+  display: inline-block;
+}
+
+
+

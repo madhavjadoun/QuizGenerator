@@ -16,7 +16,7 @@ export default function BlurText({
 }: BlurTextProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
   // Trigger when 20% of the element is visible in the viewport
-  const isInView = useInView(containerRef, { once: true, amount: 0.2 });
+  const isInView = useInView(containerRef, { once: false, amount: 0.2 });
 
   const words = text.split(/\s+/).filter(Boolean);
 

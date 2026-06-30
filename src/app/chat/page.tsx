@@ -97,7 +97,7 @@ export default function QuizPage() {
       }
 
       // Map correct to correctAnswer to match frontend's type/state expectations
-      const formattedQuestions = data.questions.map((q: any) => ({
+      const formattedQuestions = data.questions.map((q: { question: string; options: string[]; correct: string; explanation: string }) => ({
         ...q,
         correctAnswer: q.correct
       }));

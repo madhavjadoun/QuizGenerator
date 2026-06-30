@@ -8,7 +8,6 @@ GET  /documents/list   — return all documents for a given user
 from __future__ import annotations
 
 import os
-import random
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile

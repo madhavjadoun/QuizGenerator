@@ -18,8 +18,7 @@ from services.supabase_client import get_chunks, get_quiz_history, save_quiz
 
 router = APIRouter()
 
-# ── Number of chunks to sample for large PDFs ─────────────────────────────────
-LARGE_PDF_CHUNK_SAMPLE = 3
+
 
 
 # ── Request models ────────────────────────────────────────────────────────────
@@ -128,8 +127,8 @@ async def generate_quiz_endpoint(body: GenerateQuizRequest) -> dict[str, Any]:
     combined_text: str = "\n\n".join(c["content"] for c in selected)
     print(f"[quiz] Combined context length: {len(combined_text)} chars")
 
-    # ── 3. Generate quiz via Groq ─────────────────────────────────────────────
-    print(f"[quiz] Calling Groq/Quiz API to generate {num_questions} questions...")
+    # ── 3. Generate quiz via Gemini ───────────────────────────────────────────
+    print(f"[quiz] Calling Gemini/Quiz API to generate {num_questions} questions...")
     try:
         questions = generate_quiz(combined_text, num_questions=num_questions)
     except ValueError as exc:
