@@ -55,6 +55,12 @@ export default function QuizPage() {
   const [mcqValidationError, setMcqValidationError] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
+  // New SaaS Polishing States
+  const [currentQuizId, setCurrentQuizId] = useState<string>("");
+  const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [timeTaken, setTimeTaken] = useState<number>(0);
+
   const showToast = (message: string, type: "error" | "success" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -77,7 +83,15 @@ export default function QuizPage() {
 
         if (error) throw error;
         setDocuments(dbDocs || []);
-        // Do not auto-select, so the user starts with the premium empty state
+
+        // Check if docId query param exists to auto-select it
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const docIdParam = params.get("docId");
+          if (docIdParam) {
+            setSelectedDocId(docIdParam);
+          }
+        }
       } catch (err) {
         console.error("Failed to load documents:", err);
         setErrorMsg("Failed to load documents. Please check your connection.");
@@ -89,8 +103,81 @@ export default function QuizPage() {
     fetchDocs();
   }, []);
 
+  // Load default settings (MCQ count)
+  useEffect(() => {
+    async function loadDefaultSettings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const storedCount = localStorage.getItem(`settings_mcq_count_${user.id}`);
+        if (storedCount) {
+          setNumQuestions(parseInt(storedCount) || 10);
+        }
+      }
+    }
+    loadDefaultSettings();
+  }, []);
+
+  // Load existing quiz from URL query parameters (for review mode)
+  useEffect(() => {
+    async function loadQuizFromUrl() {
+      if (typeof window === "undefined" || documents.length === 0) return;
+      const params = new URLSearchParams(window.location.search);
+      const quizIdParam = params.get("quizId");
+      const reviewParam = params.get("review");
+
+      if (quizIdParam) {
+        try {
+          setGeneratingQuiz(true);
+          const { data: quizData, error } = await supabase
+            .from("quizzes")
+            .select("*, quiz_questions(*)")
+            .eq("id", quizIdParam)
+            .single();
+
+          if (error || !quizData) throw error || new Error("Quiz not found");
+
+          const dbQuestions = (quizData.quiz_questions || []).sort((a: any, b: any) => a.order_index - b.order_index);
+          const mappedQuestions = dbQuestions.map((q: any) => ({
+            question: q.question,
+            options: [q.option_a, q.option_b, q.option_c, q.option_d],
+            correctAnswer: q.correct_option === "A" ? q.option_a : q.correct_option === "B" ? q.option_b : q.correct_option === "C" ? q.option_c : q.option_d,
+            explanation: q.explanation
+          }));
+
+          setQuestions(mappedQuestions);
+          setCurrentQuizId(quizIdParam);
+          setSelectedDocId(quizData.document_id);
+
+          if (quizData.status && quizData.status !== "generated") {
+            try {
+              const attempt = JSON.parse(quizData.status);
+              if (attempt && attempt.completed) {
+                setUserAnswers(attempt.user_answers || {});
+                setScore(attempt.correct || 0);
+                setDifficulty(attempt.difficulty || "Medium");
+                setTimeTaken(attempt.time_taken || 0);
+                if (reviewParam === "true") {
+                  setSubmitted(true);
+                }
+              }
+            } catch (e) {
+              console.error("Failed to parse quiz status JSON:", e);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load quiz from URL:", err);
+          showToast("Failed to load quiz.", "error");
+        } finally {
+          setGeneratingQuiz(false);
+        }
+      }
+    }
+    loadQuizFromUrl();
+  }, [documents]);
+
   // Trigger quiz generation from selected PDF
   const handleGenerateQuiz = async () => {
+    if (generatingQuiz) return;
     setDocValidationError(false);
     setMcqValidationError(false);
     setErrorMsg(null);
@@ -117,6 +204,8 @@ export default function QuizPage() {
     setQuestions([]);
     setUserAnswers({});
     setSubmitted(false);
+    setStartTime(null);
+    setTimeTaken(0);
     showToast("Generating your quiz...", "success");
 
     try {
@@ -148,6 +237,7 @@ export default function QuizPage() {
       }));
 
       setQuestions(formattedQuestions);
+      setCurrentQuizId(data.quiz_id);
     } catch (err) {
       console.error("Quiz error:", err);
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
@@ -164,7 +254,7 @@ export default function QuizPage() {
     }));
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     // Calculate score
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -174,6 +264,83 @@ export default function QuizPage() {
     });
     setScore(correctCount);
     setSubmitted(true);
+
+    const timeTakenSec = startTime ? Math.round((Date.now() - startTime) / 1000) : 0;
+    setTimeTaken(timeTakenSec);
+
+    // Save attempt to backend
+    if (currentQuizId) {
+      try {
+        // Convert numeric keys to string for consistent JSON serialization
+        const stringifiedAnswers: Record<string, string> = {};
+        Object.entries(userAnswers).forEach(([k, v]) => {
+          stringifiedAnswers[String(k)] = v;
+        });
+
+        const docTitle = documents.find(d => d.id === selectedDocId)?.title 
+          || documents.find(d => d.id === selectedDocId)?.file_name 
+          || "Quiz";
+
+        const attemptData = {
+          completed: true,
+          correct: correctCount,
+          wrong: questions.length - correctCount,
+          accuracy: Math.round((correctCount / questions.length) * 100),
+          time_taken: timeTakenSec,
+          difficulty: difficulty,
+          title: `${docTitle} — Practice Quiz`,
+          user_answers: stringifiedAnswers
+        };
+
+        const { error } = await supabase
+          .from("quizzes")
+          .update({
+            status: JSON.stringify(attemptData),
+            total_questions: questions.length,
+          })
+          .eq("id", currentQuizId);
+
+        if (error) throw error;
+        showToast("Quiz submitted & saved to history!", "success");
+      } catch (err) {
+        console.error("Failed to save quiz attempt:", err);
+        showToast("Failed to persist quiz results to history.", "error");
+      }
+    } else {
+      showToast("Quiz completed! (No quiz ID — results not persisted.)", "error");
+    }
+  };
+
+  const handleDownloadReport = () => {
+    const totalQ = questions.length;
+    const formatTimeTaken = (sec: number) => {
+      if (!sec) return "N/A";
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    };
+    
+    const reportData = {
+      title: `${selectedDoc?.title || "Quiz"} - Practice`,
+      docName: selectedDoc?.title || selectedDoc?.file_name || "Document",
+      dateStr: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      totalQuestions: totalQ,
+      correctAnswers: score,
+      wrongAnswers: totalQ - score,
+      accuracy: Math.round((score / totalQ) * 100),
+      timeTaken: formatTimeTaken(timeTaken),
+      questions: questions.map((q, idx) => ({
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        userAnswer: userAnswers[idx] || "",
+        explanation: q.explanation
+      }))
+    };
+    
+    import("@/utils/pdfGenerator").then((mod) => {
+      mod.downloadQuizReport(reportData);
+    });
   };
 
   const selectedDoc = documents.find(d => d.id === selectedDocId);
@@ -186,7 +353,7 @@ export default function QuizPage() {
         <div className="bg-[var(--surface)] border border-[var(--border)] shadow-sm w-full max-w-[1180px] mx-auto hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250" style={{ padding: "28px", borderRadius: "18px" }}>
           <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--text-4)]" style={{ marginBottom: "24px" }}>Configure Quiz</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_180px_220px] gap-5 items-end w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_160px_140px_200px] gap-5 items-end w-full">
             
             {/* Left: Document Dropdown */}
             <div className="col-span-1 md:col-span-2 lg:col-span-1">
@@ -229,7 +396,31 @@ export default function QuizPage() {
               </div>
             </div>
 
-            {/* Center: Questions Input */}
+            {/* Middle Left: Difficulty Dropdown */}
+            <div className="col-span-1 md:col-span-1 lg:col-span-1">
+              <label className="font-bold uppercase text-[var(--text-3)] block leading-none" style={{ marginBottom: "12px", fontSize: "11px", letterSpacing: "0.08em" }}>Difficulty</label>
+              <div className="relative group/select">
+                <select
+                  value={difficulty}
+                  disabled={generatingQuiz}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                  className="w-full border border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10 bg-[var(--surface)] text-[16px] text-[var(--text-2)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50"
+                  style={{ height: "48px", borderRadius: "12px", paddingLeft: "16px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
+                >
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+                {/* Right Arrow Caret */}
+                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Right: Questions Input */}
             <div className="col-span-1 md:col-span-1 lg:col-span-1">
               <label className="font-bold uppercase text-[var(--text-3)] block leading-none" style={{ marginBottom: "12px", fontSize: "11px", letterSpacing: "0.08em" }}>No. of MCQs</label>
               <input
@@ -354,14 +545,17 @@ export default function QuizPage() {
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-4)]">Difficulty</span>
                   <span className="px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-2)]">
-                    Medium
+                    {difficulty}
                   </span>
                 </div>
               </div>
 
               <div>
                 <button
-                  onClick={() => document.getElementById("q-0")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => {
+                    if (!startTime) setStartTime(Date.now());
+                    document.getElementById("q-0")?.scrollIntoView({ behavior: "smooth" });
+                  }}
                   className="px-5 h-10 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold hover:-translate-y-[2px] active:translate-y-0 transition-all duration-200 cursor-pointer border border-transparent shadow-sm flex items-center justify-center gap-1.5"
                 >
                   <span>Start Quiz</span>
@@ -433,14 +627,26 @@ export default function QuizPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-[var(--text-1)]">Practice Quiz</h2>
               {submitted && (
-                <div className={`px-4 py-1.5 rounded-full border text-sm font-bold flex items-center gap-2 ${
-                  score >= 7 
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                    : score >= 5 
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
-                    : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                }`}>
-                  Score: {score} / {questions.length} ({Math.round((score / questions.length) * 100)}%)
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleDownloadReport}
+                    className="px-4 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold hover:bg-[var(--bg-2)] transition-colors cursor-pointer flex items-center gap-1.5"
+                    style={{ color: "var(--text-1)" }}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download Report</span>
+                  </button>
+                  <div className={`px-4 py-1.5 rounded-full border text-sm font-bold flex items-center gap-2 ${
+                    score >= 7 
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                      : score >= 5 
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
+                      : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                  }`}>
+                    Score: {score} / {questions.length} ({Math.round((score / questions.length) * 100)}%)
+                  </div>
                 </div>
               )}
             </div>

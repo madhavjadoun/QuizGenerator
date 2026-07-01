@@ -89,10 +89,10 @@ export default function DashboardPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return; // AppShell will redirect to /login if not authenticated
 
-        // 1. Fetch this user's documents metadata only
+        // 1. Fetch this user's documents metadata
         const { data: dbDocs, error: docsError } = await supabase
           .from("documents")
-          .select("file_name, file_size, created_at")
+          .select("id, title, file_name, file_size, created_at")
           .eq("user_id", user.id)         // isolate to this user
           .order("created_at", { ascending: false });
 
@@ -100,19 +100,48 @@ export default function DashboardPage() {
         const documents = dbDocs || [];
         setHasDocs(documents.length > 0);
 
-        // 2. Fetch this user's chunk count only
-        let chunkCount = 0;
-        try {
-          const { count, error } = await supabase
-            .from("chunks")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id);     // isolate to this user
-          if (!error && count !== null) {
-            chunkCount = count;
+        // 2. Fetch user's quizzes and calculate stats
+        let quizzesCount = 0;
+        let questionsSolved = 0;
+        let totalAccuracy = 0;
+        let completedQuizzesCount = 0;
+        let recentCompletedQuizzes: any[] = [];
+        
+        if (documents.length > 0) {
+          const docIds = documents.map(d => d.id);
+          const { data: dbQuizzes, error: quizzesError } = await supabase
+            .from("quizzes")
+            .select("id, status, total_questions, created_at, document_id")
+            .in("document_id", docIds)
+            .order("created_at", { ascending: false });
+            
+          if (!quizzesError && dbQuizzes) {
+            quizzesCount = dbQuizzes.length;
+            dbQuizzes.forEach(q => {
+              if (q.status && q.status !== "generated") {
+                try {
+                  const attempt = JSON.parse(q.status);
+                  if (attempt && attempt.completed) {
+                    completedQuizzesCount++;
+                    questionsSolved += (attempt.correct || 0);
+                    totalAccuracy += (attempt.accuracy || 0);
+                    recentCompletedQuizzes.push({
+                      id: q.id,
+                      title: attempt.title,
+                      accuracy: attempt.accuracy,
+                      created_at: q.created_at,
+                      docId: q.document_id
+                    });
+                  }
+                } catch (e) {
+                  // Ignore status parse errors
+                }
+              }
+            });
           }
-        } catch (e) {
-          console.warn("Could not query chunks count:", e);
         }
+        
+        const avgAccuracy = completedQuizzesCount > 0 ? Math.round(totalAccuracy / completedQuizzesCount) : 0;
 
         // 3. Perform calculations
         const totalDocsCount = documents.length;
@@ -138,28 +167,29 @@ export default function DashboardPage() {
             ),
           },
           {
-            label: "Knowledge Chunks",
-            value: chunkCount.toLocaleString(),
-            delta: `${chunkCount > 0 ? "100%" : "0%"} vectorized`,
+            label: "Quizzes Generated",
+            value: quizzesCount.toString(),
+            delta: `${questionsSolved} questions solved`,
             deltaUp: null,
             accentColor: "var(--indigo)",
             accentBg: "var(--bg-2)",
             icon: (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694 4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 2.625c0 2.278-3.694 4.125-8.25 4.125S3.75 11.153 3.75 9" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
               </svg>
             ),
           },
           {
-            label: "Sync Latency",
-            value: totalDocsCount > 0 ? "< 1.2s" : "N/A",
-            delta: "vector ingestion speed",
+            label: "Average Accuracy",
+            value: `${avgAccuracy}%`,
+            delta: `across completed tests`,
             deltaUp: null,
+            progress: avgAccuracy,
             accentColor: "var(--indigo)",
             accentBg: "var(--bg-2)",
             icon: (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             ),
           },
@@ -181,7 +211,7 @@ export default function DashboardPage() {
 
         // 6. Map recent documents (first 4 items)
         const liveRecentDocs: RecentDoc[] = documents.slice(0, 4).map((d) => ({
-          name: d.file_name,
+          name: d.title || d.file_name,
           date: new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           size: formatBytes(d.file_size),
           chunks: Math.max(1, Math.round(d.file_size / 800)),
@@ -190,11 +220,23 @@ export default function DashboardPage() {
 
         // 7. Dynamic activity log stream
         const logs: typeof recentLogs = [];
+        
+        // Show recent completed quizzes
+        recentCompletedQuizzes.slice(0, 2).forEach((q) => {
+          const docTitle = documents.find(d => d.id === q.docId)?.title || "document";
+          logs.push({
+            title: `Quiz completed: ${q.title}`,
+            type: "retrieval",
+            desc: `Scored with ${q.accuracy}% accuracy using ${docTitle}`,
+            time: new Date(q.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+          });
+        });
+
         if (documents.length > 0) {
-          documents.slice(0, 2).forEach((d) => {
+          documents.slice(0, 1).forEach((d) => {
             const chunksCount = Math.max(1, Math.round(d.file_size / 800));
             logs.push({
-              title: `${d.file_name} indexed`,
+              title: `${d.title || d.file_name} indexed`,
               type: "index",
               desc: `Completed vector ingestion and sync with pgvector`,
               time: "Just now"
@@ -205,18 +247,6 @@ export default function DashboardPage() {
               desc: `Split document into overlap fragments of 800 bytes`,
               time: "Just now"
             });
-            logs.push({
-              title: `${d.file_name} uploaded`,
-              type: "upload",
-              desc: `File transferred and secure RLS storage path verified`,
-              time: "Just now"
-            });
-          });
-          logs.push({
-            title: "Semantic retrieval completed",
-            type: "retrieval",
-            desc: `Processed user query matching vector space in ${Math.floor(Math.random() * 40 + 80)}ms`,
-            time: "2m ago"
           });
         }
 
@@ -434,7 +464,7 @@ export default function DashboardPage() {
                     {[
                       { q: "Generate New Quiz", path: "/chat" },
                       { q: "Upload Document", path: "/documents" },
-                      { q: "View Quiz History", path: "/chat" },
+                      { q: "View Quiz History", path: "/history" },
                       { q: "Browse Documents", path: "/documents" }
                     ].map((item) => (
                       <Link
