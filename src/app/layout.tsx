@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "QuizGenerator — Premium AI PDF Quiz Generator",
   description: "Upload documents and automatically generate interactive MCQ quizzes using AI.",
+  verification: {
+    google: "ApNU_7-cBH_0QOaESm0zqF4hv6r3STnfKjVNiwfLMA0",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
