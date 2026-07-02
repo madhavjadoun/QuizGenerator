@@ -1,100 +1,315 @@
-# Personal Knowledge Search Engine
+# AI Quiz Generator
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8)
+![Gemini AI](https://img.shields.io/badge/Google-Gemini-orange)
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB)
+![RAG](https://img.shields.io/badge/AI-RAG-purple)
 
-An AI-powered "Second Brain" to ingest, index, and query your personalized documents. Upload notes, articles, and PDFs, and search them instantly using high-dimensional vector representations and semantic search, or hold context-reinforced conversations with your knowledge database.
-
----
-
-## Key Features
-
-- 📂 **PDF & Document Upload**: Ingest and structure documents, research papers, notes, and text.
-- 🔍 **Semantic Search**: Natural language similarity search to retrieve concepts and answers by meaning.
-- 💬 **AI Assistant Chat**: Natural dialogue with an AI assistant contextualized on your uploaded files.
-- 📍 **Source Citations**: Inline citations pointing directly to specific pages and paragraphs in the source files.
-- 📊 **Vector Embeddings**: Text chunk representation in high-dimensional vector spaces.
-- 🕸️ **Knowledge Retrieval**: Unified, graph-like retrieval of notes and highlights for swift semantic parsing.
+An AI-powered Quiz Generator that transforms PDFs into intelligent multiple-choice quizzes. Upload study materials, research papers, notes, or books, and instantly generate high-quality MCQs using AI, semantic retrieval, and document understanding.
 
 ---
 
-## Technology Stack
+## 🚀 Features
 
-- **Framework**: Next.js 15 (App Router, Turbopack)
-- **Styling**: Tailwind CSS v4 (Glassmorphic modules, custom @theme configuration)
-- **Database**: PostgreSQL (Structured application data)
-- **ORM**: Prisma ORM (Type-safe schemas and query generation)
-- **Vector Database**: pgvector (Vector search and indexing)
-- **AI / LLM Integration**: OpenAI GPT / Google Gemini API (Embeddings & text generation)
-- **Language**: TypeScript (Strict Mode)
+- 📄 Upload PDF documents
+- 🧠 AI-powered MCQ generation
+- 📚 Supports both text-based and scanned PDFs
+- 🔍 Adaptive document parsing & semantic chunking
+- 🤖 Intelligent question generation using Google Gemini
+- 📊 Multiple quiz sizes (up to 50 questions)
+- 💬 AI Chat Assistant for document-related queries
+- 📈 Quiz history & performance tracking
+- 🎯 Automatic scoring and answer evaluation
+- ⚡ Daily credit system
+- 🔐 Secure authentication with Supabase
+- ☁️ FastAPI backend with REST APIs
+- 🎨 Modern responsive UI built with Next.js & Tailwind CSS
 
 ---
 
-## Folder Structure
+# ✨ How It Works
+
+1. User uploads a PDF.
+2. Backend extracts text using PDF parser.
+3. Large documents are intelligently chunked.
+4. Embeddings are generated for semantic understanding.
+5. Relevant chunks are retrieved using similarity search.
+6. Gemini generates high-quality MCQs from retrieved content.
+7. Users attempt quizzes and receive instant results.
+
+---
+
+# 🏗️ Tech Stack
+
+## Frontend
+
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- Framer Motion
+- Supabase Authentication
+
+## Backend
+
+- FastAPI
+- Python
+- Uvicorn
+- Pydantic
+- pdfplumber
+- pytesseract (OCR)
+- Google Gemini API
+
+## Database & Storage
+
+- Supabase PostgreSQL
+- Supabase Storage
+
+## AI
+
+- Google Gemini
+- Semantic Chunking
+- Retrieval-Augmented Generation (RAG)
+- Vector Embeddings
+
+---
+
+# 📂 Project Structure
 
 ```text
-src/
- ├── app/                  # App Router components, styles, layouts, metadata
- ├── components/           # UI Elements & layouts
- │    ├── ui/              # Reusable atomic UI (Buttons, cards, etc.)
- │    ├── layout/          # Global layouts (Navbar, Footer, Container)
- │    └── shared/          # Project specific shared modules
- ├── hooks/                # Custom React hooks
- ├── lib/                  # Third-party configurations & clients (Prisma, OpenAI, etc.)
- ├── services/             # Service integration logic
- ├── utils/                # Utility & helper functions
- ├── types/                # Strict TypeScript declaration types
- ├── constants/            # Navigation items, configuration constants
- └── styles/               # Styling configurations
+project_1/
+
+├── backend/
+│   ├── routers/
+│   ├── services/
+│   ├── models/
+│   ├── utils/
+│   ├── main.py
+│   └── requirements.txt
+│
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   ├── utils/
+│   └── types/
+│
+├── public/
+├── .env
+├── package.json
+└── README.md
 ```
 
 ---
 
-## Local Setup & Installation
+# ⚙️ Local Setup
 
-### Prerequisites
+## Prerequisites
 
-- Node.js >= 18.17
-- npm or yarn
-
-### Installation Steps
-
-1. **Clone the repository** (or navigate to workspace directory):
-   ```bash
-   cd /Users/madhavpratapsingh/Desktop/project_1
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server (with Turbopack)**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) to view the application.
-
-4. **Build the production bundle**:
-   ```bash
-   npm run build
-   ```
+- Node.js 18+
+- Python 3.10+
+- npm
+- Git
 
 ---
 
-## Future Roadmap
+## 1. Clone Repository
 
-### 📅 Day 1: Project Architecture & UI (Current)
-- Establish Next.js 15 App router structure.
-- Configure Tailwind CSS v4 styling tokens and custom glassmorphism.
-- Set up SEO metadata and baseline layout (Container, Navbar, Footer, Button).
-- Deploy clean, modern landing page UI.
+```bash
+git clone <repository-url>
+cd project_1
+```
 
-### 📅 Day 2: Parsing & Database Integration
-- Configure Prisma ORM with PostgreSQL database.
-- Build API endpoints for files & PDF uploads.
-- Build parsing workers to extract clean markdown/text layout from files.
+---
 
-### 📅 Day 3: Embedding Computation & AI Chat
-- Configure pgvector schemas for chunks.
-- Connect Google Gemini / OpenAI embeddings endpoint.
-- Develop vector query pipeline with cosine similarity.
-- Implement streaming RAG Chat interface with citation highlighting.
-# personal-knowledge-search
+## 2. Install Frontend
+
+```bash
+npm install
+```
+
+---
+
+## 3. Install Backend
+
+```bash
+cd backend
+
+python -m venv venv
+
+source venv/bin/activate
+# Windows
+# venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+---
+
+## 4. Configure Environment Variables
+
+Create:
+
+```
+.env
+backend/.env
+```
+
+Add required credentials:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+GEMINI_API_KEY=
+
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+---
+
+## 5. Run Backend
+
+```bash
+cd backend
+
+source venv/bin/activate
+
+uvicorn main:app --reload
+```
+
+Backend runs at:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+## 6. Run Frontend
+
+```bash
+npm run dev
+```
+
+Frontend runs at:
+
+```
+http://localhost:3000
+```
+
+---
+
+# 📖 Application Workflow
+
+```text
+Upload PDF
+      │
+      ▼
+Extract Text
+      │
+      ▼
+Document Analysis
+      │
+      ▼
+Semantic Chunking
+      │
+      ▼
+Embedding Generation
+      │
+      ▼
+Relevant Chunk Retrieval
+      │
+      ▼
+Gemini AI
+      │
+      ▼
+MCQ Generation
+      │
+      ▼
+Quiz Attempt
+      │
+      ▼
+Result & Analytics
+```
+
+---
+
+# 🎯 Core Modules
+
+- Authentication
+- PDF Upload
+- PDF Parsing
+- OCR Support
+- Adaptive Chunk Generator
+- Embedding Service
+- Quiz Generator
+- Quiz History
+- Credits Management
+- AI Chat
+- Dashboard
+
+---
+
+# 🔒 Authentication
+
+- Google Login
+- Email Authentication
+- Secure JWT-based sessions
+- User-specific documents & quizzes
+
+---
+
+# 📊 Current Features
+
+- ✅ AI Quiz Generation
+- ✅ PDF Upload
+- ✅ OCR Support
+- ✅ Adaptive Chunking
+- ✅ Semantic Retrieval
+- ✅ Dashboard
+- ✅ Quiz History
+- ✅ AI Chat
+- ✅ Daily Credits
+- ✅ Responsive UI
+
+---
+## 🌐 Live Demo
+
+Coming Soon...
+---
+
+# 🚀 Future Improvements
+
+- DOCX Support
+- PPT Support
+- Flashcard Generation
+- Difficulty Levels
+- Timed Exams
+- Leaderboard
+- Quiz Sharing
+- Team Workspace
+- Export Quiz as PDF
+- Multi-language Support
+
+---
+
+# 👨‍💻 Author
+
+**Madhav Pratap Singh**
+
+B.Tech CSE
+
+GLA University
+
+---
+
+# 📄 License
+
+This project is developed for educational and learning purposes.
