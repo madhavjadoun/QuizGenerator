@@ -132,6 +132,7 @@ export default function QuizPage() {
           if (token) {
             const credRes = await fetch(`${apiUrl}/credits/status`, {
               headers: { "Authorization": `Bearer ${token}` },
+              cache: "no-store",
             });
             if (credRes.ok) {
               const credData = await credRes.json();
@@ -190,6 +191,7 @@ export default function QuizPage() {
             headers: {
               "Authorization": `Bearer ${token}`,
             },
+            cache: "no-store",
           });
 
           if (!res.ok) {
@@ -307,6 +309,7 @@ export default function QuizPage() {
             if (s2?.access_token) {
               const credRes = await fetch(`${apiUrl}/credits/status`, {
                 headers: { "Authorization": `Bearer ${s2.access_token}` },
+                cache: "no-store",
               });
               if (credRes.ok) {
                 const credData = await credRes.json();

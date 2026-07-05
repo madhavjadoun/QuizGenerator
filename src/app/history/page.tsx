@@ -108,6 +108,7 @@ export default function HistoryPage() {
           headers: {
             "Authorization": `Bearer ${token}`,
           },
+          cache: "no-store",
         });
 
         if (!res.ok) {

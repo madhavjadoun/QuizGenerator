@@ -139,6 +139,7 @@ export default function DashboardPage() {
             if (apiUrl.includes("localhost")) apiUrl = apiUrl.replace("localhost", "127.0.0.1");
             const credRes = await fetch(`${apiUrl}/credits/status`, {
               headers: { "Authorization": `Bearer ${token}` },
+              cache: "no-store",
             });
             if (credRes.ok) {
               const credData = await credRes.json();
@@ -183,6 +184,7 @@ export default function DashboardPage() {
             if (apiUrl.includes("localhost")) apiUrl = apiUrl.replace("localhost", "127.0.0.1");
             const res = await fetch(`${apiUrl}/quiz/user-history`, {
               headers: { "Authorization": `Bearer ${token}` },
+              cache: "no-store",
             });
             if (res.ok) {
               const quizData = await res.json();
