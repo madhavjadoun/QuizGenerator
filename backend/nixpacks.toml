@@ -1,0 +1,5 @@
+# nixpacks.toml
+# Tells Railway/Nixpacks to install tesseract and poppler_utils for OCR and PDF parsing support.
+
+[phases.setup]
+nixPkgs = ["...", "tesseract", "poppler_utils"]
