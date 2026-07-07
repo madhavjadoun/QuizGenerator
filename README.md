@@ -282,7 +282,7 @@ Result & Analytics
 ---
 ## 🌐 Live Demo
 
-Coming Soon...
+https://www.quizgens.tech/
 ---
 
 # 🚀 Future Improvements
