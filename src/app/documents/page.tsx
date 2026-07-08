@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import React from "react";
 import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
 import OrbitLoader from "@/components/app/OrbitLoader";
 import { supabase } from "@/lib/supabase";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
+
 
 interface SupabaseDoc {
   id: string;
@@ -15,6 +17,98 @@ interface SupabaseDoc {
   file_size: number;
   created_at: string;
 }
+
+interface DocumentCardProps {
+  doc: SupabaseDoc;
+  displayName: string;
+  ext: string;
+  chunksCount: number;
+  formatBytes: (bytes: number, decimals?: number) => string;
+  handlePreview: (doc: SupabaseDoc, e: React.MouseEvent) => void;
+  onDeleteClick: (doc: SupabaseDoc) => void;
+}
+
+const DocumentCard = React.memo(function DocumentCard({
+  doc,
+  displayName,
+  ext,
+  chunksCount,
+  formatBytes,
+  handlePreview,
+  onDeleteClick,
+}: DocumentCardProps) {
+  return (
+    <div
+      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 sm:px-6 py-4 flex flex-col justify-between lg:h-[148px] relative group hover:-translate-y-0.5 hover:shadow-md hover:border-[var(--border-strong)] transition-all duration-300 min-w-0 overflow-hidden"
+    >
+      {/* Top Row: Ext badge, Filename, Synced status */}
+      <div className="space-y-3 sm:space-y-4 min-w-0">
+        <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+            <span
+              className="w-9 h-5 text-[10px] font-bold uppercase tracking-wider rounded border flex items-center justify-center flex-shrink-0 bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-3)]"
+            >
+              {ext}
+            </span>
+            <span
+              className="text-sm sm:text-[15px] font-semibold text-[var(--text-1)] truncate leading-6 min-w-0 tracking-tight"
+              title={displayName}
+            >
+              {displayName}
+            </span>
+          </div>
+
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-4)] px-1.5 py-0.5 rounded flex-shrink-0 leading-4">
+            ✓ Synced
+          </span>
+        </div>
+
+        {/* Compact Metadata Row */}
+        <div className="text-xs sm:text-[13px] font-normal text-[var(--text-4)] flex flex-wrap items-center gap-5 md:pl-[50px] leading-relaxed min-w-0">
+          <span className="whitespace-nowrap">{formatBytes(doc.file_size, 0)}</span>
+          <span className="whitespace-nowrap">{chunksCount} chunks</span>
+          <span className="whitespace-nowrap"><FormattedDateTime date={doc.created_at} /></span>
+        </div>
+      </div>
+
+      {/* Actions Panel */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 mt-auto border-t border-[var(--border)] w-full min-w-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 md:pl-[50px] min-w-0 flex-1">
+          <button
+            onClick={(e) => handlePreview(doc, e)}
+            className="flex items-center justify-center sm:justify-start gap-1.5 text-[13px] font-semibold text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors group/preview cursor-pointer bg-transparent border-0 p-0 flex-shrink-0"
+          >
+            <svg className="w-4 h-4 flex-shrink-0 text-[var(--text-4)] group-hover/preview:text-[var(--text-2)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Preview</span>
+          </button>
+
+          <Link
+            href={`/chat?docId=${doc.id}`}
+            className="flex items-center justify-center gap-1.5 px-3 sm:px-4 h-8 text-[11px] font-bold btn-premium-shine rounded-[14px] leading-none min-w-0 w-full sm:w-auto"
+          >
+            <svg className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l-.813-5.096L3 15l5.187-.904L9 9l.813 5.096L15 15l-5.187.904zM18 10.5l-.5 3-.5-3-3-.5 3-.5.5-3 .5 3 3 .5-3 .5zM19 19.5l-.25 1.5-.25-1.5-1.5-.25 1.5-.25.25-1.5.25 1.5 1.5.25-1.5.25z" />
+            </svg>
+            <span className="truncate text-[var(--text-inv)]">Generate Quiz</span>
+          </Link>
+        </div>
+
+        <button
+          onClick={() => onDeleteClick(doc)}
+          className="w-8 h-8 rounded-full bg-[var(--surface)] border border-[var(--border)] shadow-xs flex items-center justify-center text-[var(--text-4)] hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/20 opacity-100 sm:opacity-0 scale-100 sm:scale-95 sm:group-hover:opacity-100 sm:group-hover:scale-100 transition-all duration-200 cursor-pointer flex-shrink-0 self-end sm:self-auto"
+          title="Delete document"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+});
 
 
 
@@ -108,7 +202,7 @@ export default function DocumentsPage() {
     };
   };
 
-  const getStoragePath = (doc: SupabaseDoc): string => {
+  const getStoragePath = useCallback((doc: SupabaseDoc): string => {
     // If the file_url is already just the relative storage path (doesn't start with HTTP/HTTPS)
     if (doc.file_url && !doc.file_url.startsWith("http://") && !doc.file_url.startsWith("https://")) {
       return doc.file_url;
@@ -123,9 +217,9 @@ export default function DocumentsPage() {
       return userId ? `${userId}/${doc.file_name}` : doc.file_name;
     }
     return userId ? `${userId}/${doc.file_name}` : doc.file_name;
-  };
+  }, [userId]);
 
-  const handlePreview = async (doc: SupabaseDoc, e: React.MouseEvent) => {
+  const handlePreview = useCallback(async (doc: SupabaseDoc, e: React.MouseEvent) => {
     e.preventDefault();
     try {
       if (!userId) {
@@ -189,7 +283,11 @@ export default function DocumentsPage() {
       }
       showToast("Error loading document preview.", "error");
     }
-  };
+  }, [userId, getStoragePath]);
+
+  const onDeleteClick = useCallback((doc: SupabaseDoc) => {
+    setDocToDelete(doc);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -439,7 +537,7 @@ export default function DocumentsPage() {
         )}
 
         {/* Documents Cards Grid wrapper */}
-        <div className="border border-[#E5E7EB] dark:border-slate-800 bg-white dark:bg-[#151d2f] rounded-xl overflow-hidden">
+        <div className="border border-[var(--border)] bg-[var(--surface)] rounded-xl overflow-hidden">
           {/* Section header with compact statistics pills */}
           <div
             className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-[var(--border)]"
@@ -512,76 +610,16 @@ export default function DocumentsPage() {
                 const chunksCount = Math.max(1, Math.round(doc.file_size / 800));
 
                 return (
-                  <div
+                  <DocumentCard
                     key={doc.id}
-                    className="bg-white dark:bg-[#151d2f] border border-[#E5E7EB] dark:border-slate-800 rounded-xl px-4 sm:px-6 py-4 flex flex-col justify-between lg:h-[148px] relative group hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 min-w-0 overflow-hidden"
-                  >
-                    {/* Top Row: Ext badge, Filename, Synced status */}
-                    <div className="space-y-3 sm:space-y-4 min-w-0">
-                      <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-3 min-w-0">
-                        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
-                          <span
-                            className="w-9 h-5 text-[10px] font-bold uppercase tracking-wider rounded border flex items-center justify-center flex-shrink-0 bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-3)]"
-                          >
-                            {ext}
-                          </span>
-                          <span
-                            className="text-sm sm:text-[15px] font-semibold text-[var(--text-1)] truncate leading-6 min-w-0 tracking-tight"
-                            title={displayName}
-                          >
-                            {displayName}
-                          </span>
-                        </div>
-
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-4)] px-1.5 py-0.5 rounded flex-shrink-0 leading-4">
-                          ✓ Synced
-                        </span>
-                      </div>
-
-                      {/* Compact Metadata Row */}
-                      <div className="text-xs sm:text-[13px] font-normal text-[var(--text-4)] flex flex-wrap items-center gap-5 md:pl-[50px] leading-relaxed min-w-0">
-                        <span className="whitespace-nowrap">{formatBytes(doc.file_size, 0)}</span>
-                        <span className="whitespace-nowrap">{chunksCount} chunks</span>
-                        <span className="whitespace-nowrap"><FormattedDateTime date={doc.created_at} /></span>
-                      </div>
-                    </div>
-
-                    {/* Actions Panel */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 mt-auto border-t border-[var(--border)] w-full min-w-0">
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 md:pl-[50px] min-w-0 flex-1">
-                        <button
-                          onClick={(e) => handlePreview(doc, e)}
-                          className="flex items-center justify-center sm:justify-start gap-1.5 text-[13px] font-semibold text-[var(--text-3)] hover:text-[var(--text-1)] transition-colors group/preview cursor-pointer bg-transparent border-0 p-0 flex-shrink-0"
-                        >
-                          <svg className="w-4 h-4 flex-shrink-0 text-[var(--text-4)] group-hover/preview:text-[var(--text-2)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span>Preview</span>
-                        </button>
-
-                        <Link
-                          href={`/chat?docId=${doc.id}`}
-                          className="flex items-center justify-center gap-1.5 px-3 sm:px-4 h-8 text-[11px] font-semibold text-white dark:text-[var(--text-inv)] bg-[var(--indigo)] hover:bg-[var(--indigo)]/90 rounded-lg transition-all cursor-pointer shadow-sm hover:shadow text-center leading-none min-w-0 w-full sm:w-auto"
-                        >
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l-.813-5.096L3 15l5.187-.904L9 9l.813 5.096L15 15l-5.187.904zM18 10.5l-.5 3-.5-3-3-.5 3-.5.5-3 .5 3 3 .5-3 .5zM19 19.5l-.25 1.5-.25-1.5-1.5-.25 1.5-.25.25-1.5.25 1.5 1.5.25-1.5.25z" />
-                          </svg>
-                          <span className="truncate">Generate Quiz</span>
-                        </Link>
-                      </div>
-
-                      <button
-                        onClick={() => setDocToDelete(doc)}
-                        className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700/60 shadow-sm flex items-center justify-center text-[var(--text-4)] hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/20 opacity-100 sm:opacity-0 scale-100 sm:scale-95 sm:group-hover:opacity-100 sm:group-hover:scale-100 transition-all duration-200 cursor-pointer flex-shrink-0 self-end sm:self-auto"
-                        title="Delete document"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
+                    doc={doc}
+                    displayName={displayName}
+                    ext={ext}
+                    chunksCount={chunksCount}
+                    formatBytes={formatBytes}
+                    handlePreview={handlePreview}
+                    onDeleteClick={onDeleteClick}
+                  />
                 );
               })}
             </div>
@@ -591,26 +629,32 @@ export default function DocumentsPage() {
 
       {/* Delete Confirmation Modal */}
       {docToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
-          <div className="glass-card rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl border border-[var(--border)] animate-in fade-in zoom-in-95 duration-200 bg-[var(--surface-2)]">
-            <h3 className="text-base font-semibold text-[var(--text-1)] tracking-tight">Delete Document</h3>
-            <p className="text-sm font-normal text-[var(--text-3)] mt-2 leading-relaxed break-words">
-              Are you sure you want to delete <span className="font-semibold text-[var(--text-1)]">&quot;{getDocumentDisplayName(docToDelete)}&quot;</span>? This action cannot be undone.
-            </p>
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 mt-5">
-              <button
-                onClick={() => setDocToDelete(null)}
-                className="px-4 py-2 text-xs font-semibold rounded-lg hover:bg-black/5 dark:hover:bg-white/5 border border-[var(--border)] transition-colors cursor-pointer text-[var(--text-2)]"
-              >
+        <div className="lg-backdrop" onClick={() => setDocToDelete(null)}>
+          <div className="lg-card" onClick={e => e.stopPropagation()}>
+            <div className="lg-card-content">
+              <div className="lg-icon lg-icon-danger">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="lg-title">Delete Document?</h3>
+              <p className="lg-message">
+                &quot;{getDocumentDisplayName(docToDelete)}&quot; and all associated quizzes will be permanently removed.
+              </p>
+            </div>
+            <div className="lg-divider" />
+            <div className="lg-btn-row">
+              <button className="lg-btn lg-btn-secondary" onClick={() => setDocToDelete(null)}>
                 Cancel
               </button>
+              <div className="lg-btn-separator" />
               <button
+                className="lg-btn lg-btn-destructive"
                 onClick={async () => {
                   const doc = docToDelete;
                   setDocToDelete(null);
                   await handleDelete(doc);
                 }}
-                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors cursor-pointer"
               >
                 Delete
               </button>
@@ -618,6 +662,8 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+
+
 
       {/* Toast Notification */}
       {toast && (

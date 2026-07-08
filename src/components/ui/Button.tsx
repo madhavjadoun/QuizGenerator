@@ -3,7 +3,7 @@
 import React from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "glass" | "ghost";
+  variant?: "primary" | "secondary" | "glass" | "ghost" | "destructive";
   size?: "sm" | "md" | "lg";
   children: React.ReactNode;
 }
@@ -16,34 +16,34 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    "relative inline-flex items-center justify-center font-medium rounded-xl overflow-hidden transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none active:scale-98";
+    "relative inline-flex items-center justify-center font-semibold overflow-hidden transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-zinc-500/40 disabled:opacity-50 disabled:pointer-events-none cursor-pointer select-none active:scale-[0.98]";
   
   const variants = {
     primary:
-      "bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 glow-btn-pulse border border-white/10",
+      "btn-premium-shine",
     secondary:
-      "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800/80 hover:border-zinc-700 shadow-sm",
+      "bg-transparent border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900/60 hover:text-zinc-900 dark:hover:text-zinc-100 shadow-xs",
     glass:
-      "glass-panel text-zinc-200 hover:text-white shadow-md border-white/5 hover:border-white/10",
+      "bg-transparent border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900/60 hover:text-zinc-900 dark:hover:text-zinc-100 shadow-xs",
     ghost:
-      "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50",
+      "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-900/40",
+    destructive:
+      "bg-red-600 text-white hover:bg-red-500 shadow-xs border border-red-700/10",
   };
 
   const sizes = {
-    sm: "px-3.5 py-1.5 text-sm",
-    md: "px-5 py-2.5 text-base",
-    lg: "px-7 py-3.5 text-lg",
+    sm: "px-3.5 py-1.5 text-xs",
+    md: "px-5 py-2.5 text-sm",
+    lg: "px-7 py-3.5 text-base",
   };
+
+  const radiusClass = variant === "primary" ? "rounded-[14px]" : "rounded-xl";
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${radiusClass} ${className}`}
       {...props}
     >
-      {/* Premium background shine overlay for non-primary buttons */}
-      {(variant === "glass" || variant === "secondary") && (
-        <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent -translate-x-full hover:animate-shimmer pointer-events-none" />
-      )}
       <span className="relative z-10 flex items-center justify-center gap-2">{children}</span>
     </button>
   );

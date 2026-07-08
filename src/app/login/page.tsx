@@ -59,10 +59,6 @@ function LoginContent() {
     return () => subscription.unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-  }, []);
-
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -170,7 +166,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-[#F8FAFC] dark:bg-[#090D1A] transition-colors duration-200">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-[#F8FAFC] dark:bg-[#09090B] transition-colors duration-200">
       
       {/* Dynamic Keyframes for Custom Float Animations */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -201,10 +197,10 @@ function LoginContent() {
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="max-w-7xl w-full lg:w-[95%] min-h-[600px] lg:h-[800px] rounded-[40px] overflow-hidden border border-[#E2E8F0] dark:border-[#24324A] shadow-2xl relative bg-[#FAFBFC] dark:bg-[#131C31] flex flex-col lg:flex-row"
+        className="max-w-7xl w-full lg:w-[95%] min-h-[600px] lg:h-[800px] rounded-[40px] overflow-hidden border border-[#E2E8F0] dark:border-white/[0.08] shadow-2xl relative bg-[#FAFBFC] dark:bg-[#111113] flex flex-col lg:flex-row"
       >
         {/* LEFT COLUMN: Brand Experience (Desktop only) */}
-        <div className="hidden lg:flex lg:w-[55%] flex-col justify-between p-12 xl:p-16 bg-[#0B1020] text-slate-100 border-r border-[#24324A]/40 relative overflow-hidden select-none">
+        <div className="hidden lg:flex lg:w-[55%] flex-col justify-between p-12 xl:p-16 bg-[#141416] text-slate-100 border-r border-white/[0.08] relative overflow-hidden select-none">
           
           <Image
             src="/login-illustration.jpg"
@@ -223,15 +219,15 @@ function LoginContent() {
           />
 
           {/* Vignette radial overlay for background color integration */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#0B1020_95%)] pointer-events-none" style={{ zIndex: 1 }} />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#141416_95%)] pointer-events-none" style={{ zIndex: 1 }} />
           {/* Top gradient fade */}
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#0B1020] to-transparent pointer-events-none" style={{ zIndex: 1 }} />
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#141416] to-transparent pointer-events-none" style={{ zIndex: 1 }} />
           {/* Bottom gradient fade */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0B1020] to-transparent pointer-events-none" style={{ zIndex: 1 }} />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#141416] to-transparent pointer-events-none" style={{ zIndex: 1 }} />
 
-          {/* Subtle atmospheric glows (4-8% opacity only, large blur) */}
-          <div className="absolute top-[-15%] left-[-15%] w-[80%] h-[80%] rounded-full bg-[#5B6EFF]/6 blur-[150px] pointer-events-none" style={{ zIndex: 1 }} />
-          <div className="absolute bottom-[-15%] right-[-15%] w-[80%] h-[80%] rounded-full bg-[#4FD1C5]/5 blur-[150px] pointer-events-none" style={{ zIndex: 1 }} />
+          {/* Subtle atmospheric glows (disabled or gray-level muted glows) */}
+          <div className="absolute top-[-15%] left-[-15%] w-[80%] h-[80%] rounded-full bg-white/[0.02] blur-[150px] pointer-events-none" style={{ zIndex: 1 }} />
+          <div className="absolute bottom-[-15%] right-[-15%] w-[80%] h-[80%] rounded-full bg-white/[0.02] blur-[150px] pointer-events-none" style={{ zIndex: 1 }} />
           
           {/* Concentric knowledge rings in the background */}
           <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center" style={{ zIndex: 1 }}>
@@ -250,10 +246,10 @@ function LoginContent() {
             <div className="relative w-full max-w-[720px] h-[500px] mt-6 mx-auto" style={{ zIndex: 2 }}>
               {/* Float Card 1: PDF Indexed */}
               <div 
-                className="absolute top-[22%] -left-6 z-20 bg-[rgba(18,24,42,0.88)] border border-white/[0.08] rounded-[18px] px-3.5 py-2.5 backdrop-blur-[12px] shadow-sm animate-float-1"
-                style={{ boxShadow: "0 10px 30px rgba(0,0,0,0.15)" }}
+                className="absolute top-[22%] -left-6 z-20 bg-[rgba(23,23,26,0.92)] border border-white/[0.08] rounded-[18px] px-3.5 py-2.5 backdrop-blur-[12px] shadow-sm animate-float-1"
+                style={{ boxShadow: "0 10px 30px rgba(0,0,0,0.3)" }}
               >
-                <div className="text-[9px] font-bold text-[#4FD1C5] uppercase tracking-wider">PDF Indexed</div>
+                <div className="text-[9px] font-bold text-[#8A8A91] uppercase tracking-wider">PDF Indexed</div>
                 <div className="text-[11px] font-semibold text-slate-200 mt-0.5">142 Pages</div>
               </div>
 
@@ -285,7 +281,7 @@ function LoginContent() {
         </div>
 
         {/* RIGHT COLUMN: Form Experience */}
-        <div className="w-full lg:w-[45%] flex flex-col justify-between p-8 sm:p-12 lg:py-12 lg:px-16 relative overflow-y-auto bg-[#FAFBFC] transition-colors duration-200">
+        <div className="w-full lg:w-[45%] flex flex-col justify-between p-8 sm:p-12 lg:py-12 lg:px-16 relative overflow-y-auto bg-[var(--bg)] dark:bg-[var(--bg-2)] transition-colors duration-200">
           
           {/* Header toolbar with Mobile Logo */}
           <div className="flex items-center justify-between w-full">
@@ -294,7 +290,7 @@ function LoginContent() {
               <LogoSVG
                 type="full"
                 animate={false}
-                className="h-8 w-auto object-contain select-none pointer-events-none"
+                className="h-8 w-auto object-contain select-none pointer-events-none dark:invert dark:hue-rotate-180"
               />
             </div>
           </div>
@@ -306,14 +302,14 @@ function LoginContent() {
               {/* Header text */}
               <div className="space-y-2 mb-8">
                 <h2 
-                  className="font-heading font-extrabold text-3xl lg:text-[40px] text-[#0F172A] tracking-[-0.04em] leading-[1.1]"
+                  className="font-heading font-extrabold text-3xl lg:text-[40px] text-[var(--text-1)] tracking-[-0.04em] leading-[1.1]"
                   style={{
                     fontWeight: 800,
                   }}
                 >
                   {mode === "signin" ? "Sign in to account" : "Create an account"}
                 </h2>
-                <p className="text-[16px] text-[#64748B] font-normal leading-relaxed">
+                <p className="text-[16px] text-[var(--text-3)] font-normal leading-relaxed">
                   {mode === "signin"
                     ? "Welcome back. Enter your credentials to access your workspace."
                     : "Get started with your private research environment."}
@@ -322,7 +318,7 @@ function LoginContent() {
 
               {/* Error Message banner */}
               {errorMessage && (
-                <div className="p-3.5 rounded-[12px] bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-medium flex items-center gap-2">
+                <div className="p-3.5 rounded-[12px] bg-rose-500/10 border border-rose-500/25 text-rose-500 text-xs font-semibold flex items-center gap-2">
                   <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
@@ -332,7 +328,7 @@ function LoginContent() {
 
               {/* Success Message banner */}
               {successMessage && (
-                <div className="p-3.5 rounded-[12px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-medium flex items-center gap-2">
+                <div className="p-3.5 rounded-[12px] bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 text-xs font-semibold flex items-center gap-2">
                   <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
@@ -342,7 +338,7 @@ function LoginContent() {
 
               {/* Google sign-in container */}
               <div className="space-y-2.5">
-                <span className="block text-center text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]">
+                <span className="block text-center text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-4)]">
                   Sign in with
                 </span>
                 <div className="flex justify-center">
@@ -352,13 +348,13 @@ function LoginContent() {
                     type="button"
                     onClick={handleGoogleAuth}
                     disabled={googleLoading || loading}
-                    className="w-[60px] h-[60px] flex items-center justify-center rounded-full border border-[#E2E8F0] bg-white hover:bg-slate-50 transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-[60px] h-[60px] flex items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--bg-2)] transition-colors shadow-xs cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                     style={{
-                      boxShadow: "0 4px 12px rgba(15, 23, 42, 0.04)",
+                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
                     }}
                   >
                     {googleLoading ? (
-                      <svg className="w-4 h-4 animate-spin text-[#0F172A]" viewBox="0 0 24 24" fill="none">
+                      <svg className="w-4 h-4 animate-spin text-[var(--text-1)]" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
@@ -389,9 +385,9 @@ function LoginContent() {
               {/* Divider line */}
               <div className="relative flex items-center justify-center py-1">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E2E8F0]" />
+                  <div className="w-full border-t border-[var(--border)]" />
                 </div>
-                <span className="relative px-3 bg-[#FAFBFC] text-[9px] font-bold uppercase tracking-wider text-[#94A3B8]">
+                <span className="relative px-3 bg-[var(--bg)] dark:bg-[var(--bg-2)] text-[9px] font-bold uppercase tracking-wider text-[var(--text-4)] transition-colors duration-200">
                   or continue with email
                 </span>
               </div>
@@ -401,11 +397,11 @@ function LoginContent() {
                 
                 {/* Email Address */}
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B] ml-4">
+                  <label className="block text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-3)] ml-4">
                     Email Address
                   </label>
                   <div className="relative">
-                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-4)] pointer-events-none">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
                       </svg>
@@ -415,7 +411,7 @@ function LoginContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@company.com"
-                      className="w-full h-[60px] text-sm pl-14 pr-6 border border-[#E5E7EB] bg-[#FAFBFC] hover:border-slate-300 focus:border-[#5B6EFF] focus:ring-2 focus:ring-[#5B6EFF]/10 rounded-full outline-none transition-all placeholder:text-slate-400/70"
+                      className="w-full h-[60px] text-sm pl-14 pr-6 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-1)] hover:border-[var(--border-strong)] focus:border-[var(--text-1)] focus:ring-2 focus:ring-[var(--text-1)]/5 rounded-full outline-none transition-all placeholder:text-[var(--text-4)]"
                       disabled={loading || googleLoading}
                       autoComplete="email"
                     />
@@ -425,7 +421,7 @@ function LoginContent() {
                 {/* Password */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between ml-4">
-                    <label className="block text-[10px] font-bold uppercase tracking-[0.08em] text-[#64748B]">
+                    <label className="block text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-3)]">
                       Password
                     </label>
                     {mode === "signin" && (
@@ -433,14 +429,14 @@ function LoginContent() {
                         type="button"
                         onClick={() => alert("Password reset code triggered in demo workspace.")}
                         disabled={loading || googleLoading}
-                        className="text-[11px] font-semibold text-[#5B6EFF] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                        className="text-[11px] font-semibold text-[var(--text-1)] hover:underline cursor-pointer bg-transparent border-0 p-0"
                       >
                         Forgot password?
                       </button>
                     )}
                   </div>
                   <div className="relative">
-                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <span className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-4)] pointer-events-none">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
@@ -450,7 +446,7 @@ function LoginContent() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-[60px] text-sm pl-14 pr-12 border border-[#E5E7EB] bg-[#FAFBFC] hover:border-slate-300 focus:border-[#5B6EFF] focus:ring-2 focus:ring-[#5B6EFF]/10 rounded-full outline-none transition-all placeholder:text-slate-400/70"
+                      className="w-full h-[60px] text-sm pl-14 pr-12 border border-[var(--border)] bg-[var(--surface)] text-[var(--text-1)] hover:border-[var(--border-strong)] focus:border-[var(--text-1)] focus:ring-2 focus:ring-[var(--text-1)]/5 rounded-full outline-none transition-all placeholder:text-[var(--text-4)]"
                       disabled={loading || googleLoading}
                       autoComplete="current-password"
                     />
@@ -459,7 +455,7 @@ function LoginContent() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       disabled={loading || googleLoading}
-                      className="absolute inset-y-0 right-6 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                      className="absolute inset-y-0 right-6 flex items-center text-[var(--text-4)] hover:text-[var(--text-2)] transition-colors cursor-pointer"
                     >
                       {showPassword ? (
                         <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -479,33 +475,33 @@ function LoginContent() {
                 <div className="space-y-4 pt-1 ml-4">
                   {mode === "signin" && (
                     <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2 text-xs text-[#64748B] cursor-pointer select-none">
+                      <label className="flex items-center gap-2 text-xs text-[var(--text-3)] cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={rememberMe}
                           onChange={(e) => setRememberMe(e.target.checked)}
                           disabled={loading || googleLoading}
-                          className="h-4 w-4 rounded-full border-[#E2E8F0] text-[#5B6EFF] focus:ring-[#5B6EFF] cursor-pointer bg-[#FAFBFC]"
+                          className="h-4 w-4 rounded-full border-[var(--border)] text-[var(--text-1)] focus:ring-[var(--text-1)] cursor-pointer bg-[var(--surface)]"
                         />
                         <span>Remember me</span>
                       </label>
                     </div>
                   )}
 
-                  <div className="flex items-start gap-2.5 text-xs text-[#64748B] select-none">
+                  <div className="flex items-start gap-2.5 text-xs text-[var(--text-3)] select-none font-medium">
                     <input
                       type="checkbox"
                       id="agreeTerms"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
                       disabled={loading || googleLoading}
-                      className="h-4 w-4 rounded border-[#E2E8F0] text-[#5B6EFF] focus:ring-[#5B6EFF] mt-0.5 cursor-pointer bg-[#FAFBFC] flex-shrink-0"
+                      className="h-4 w-4 rounded border-[var(--border)] text-[var(--text-1)] focus:ring-[var(--text-1)] mt-0.5 cursor-pointer bg-[var(--surface)] flex-shrink-0"
                     />
-                    <label htmlFor="agreeTerms" className="leading-snug cursor-pointer font-medium">
+                    <label htmlFor="agreeTerms" className="leading-snug cursor-pointer">
                       By signing in or creating an account, you agree to the{" "}
-                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#5B6EFF] hover:underline">Terms of Service</a>
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--text-1)] hover:underline">Terms of Service</a>
                       {" "}and{" "}
-                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-[#5B6EFF] hover:underline">Privacy Policy</a>.
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--text-1)] hover:underline">Privacy Policy</a>.
                     </label>
                   </div>
                 </div>
@@ -516,14 +512,14 @@ function LoginContent() {
                   whileTap={{ y: 0 }}
                   type="submit"
                   disabled={loading || googleLoading}
-                  className="w-full h-[60px] flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold cursor-pointer bg-[#0F172A] hover:bg-[#111827] text-white transition-all disabled:opacity-50 disabled:pointer-events-none mt-5"
+                  className="w-full h-[60px] flex items-center justify-center gap-2 px-6 py-2.5 rounded-[14px] text-sm font-semibold cursor-pointer bg-[var(--text-1)] hover:opacity-90 text-[var(--text-inv)] transition-all disabled:opacity-50 disabled:pointer-events-none mt-5"
                   style={{
-                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.08)",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   {loading ? (
                     <>
-                      <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                      <svg className="w-4 h-4 animate-spin text-[var(--text-inv)]" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
@@ -536,7 +532,7 @@ function LoginContent() {
                       <span>
                         {mode === "signin" ? "Sign In" : "Create Account"}
                       </span>
-                      <svg className="w-4.5 h-4.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-4.5 h-4.5 text-[var(--text-inv)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
                         <polyline points="10 17 15 12 10 7" />
                         <line x1="15" y1="12" x2="3" y2="12" />
@@ -549,7 +545,7 @@ function LoginContent() {
             </div>
 
             {/* Form Toggle Switcher */}
-            <div className="text-center text-xs text-[#64748B] mt-8">
+            <div className="text-center text-xs text-[var(--text-3)] mt-8">
               {mode === "signin" ? (
                 <>
                   New to QuizGenerator?{" "}
@@ -559,7 +555,7 @@ function LoginContent() {
                       setErrorMessage("");
                       setMode("signup");
                     }}
-                    className="font-semibold text-[#5B6EFF] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                    className="font-semibold text-[var(--text-1)] hover:underline cursor-pointer bg-transparent border-0 p-0"
                   >
                     Create an account
                   </button>
@@ -573,7 +569,7 @@ function LoginContent() {
                       setErrorMessage("");
                       setMode("signin");
                     }}
-                    className="font-semibold text-[#5B6EFF] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                    className="font-semibold text-[var(--text-1)] hover:underline cursor-pointer bg-transparent border-0 p-0"
                   >
                     Sign in
                   </button>
@@ -583,12 +579,12 @@ function LoginContent() {
           </div>
 
           {/* Small Legal/Privacy Footer */}
-          <div className="w-full text-center mt-auto pt-6 border-t border-[#E2E8F0] select-none">
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[10px] font-medium text-[#64748B]">
+          <div className="w-full text-center mt-auto pt-6 border-t border-[var(--border)] select-none">
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[10px] font-medium text-[var(--text-4)]">
               <span>Protected by reCAPTCHA</span>
-              <span className="text-slate-300">•</span>
+              <span className="text-[var(--border)]">•</span>
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:underline">Privacy Policy</a>
-              <span className="text-slate-300">•</span>
+              <span className="text-[var(--border)]">•</span>
               <a href="/terms" target="_blank" rel="noopener noreferrer" className="hover:underline">Terms of Service</a>
             </div>
           </div>

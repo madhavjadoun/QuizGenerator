@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,6 +8,7 @@ import BlurText from "@/components/ui/BlurText";
 import { supabase } from "@/lib/supabase";
 import OrbitLoader from "@/components/app/OrbitLoader";
 import NavbarLogo from "@/components/layout/NavbarLogo";
+
 
 function SidebarToggle({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
   return (
@@ -143,7 +145,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
 
   useEffect(() => {
     setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
-    
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -154,7 +156,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
       setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
     });
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    
+
     return () => {
       obs.disconnect();
       window.removeEventListener("resize", checkMobile);
@@ -256,7 +258,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
 
   if (userLoading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg)]">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
         <OrbitLoader size={48} />
         <p className="text-xs text-[var(--text-3)] mt-4 font-mono animate-pulse">Establishing secure session…</p>
       </div>
@@ -266,10 +268,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
   return (
     <div className="fixed inset-0 flex overflow-hidden app-bg" style={{ height: "100vh" }}>
 
-      {/* ── Aurora Glow (behind everything) ── */}
-      <div className="aurora-tl" />
-      <div className="aurora-br" />
-      <div className="aurora-accent" />
+
 
       {/* ── Desktop Sidebar ── */}
       {!noSidebar && (
@@ -397,9 +396,9 @@ export default function AppShell({ children, title, subtitle, action, publicPage
             {title === "Documents" ? (
               <div className="flex flex-col gap-1">
                 <div className="text-xs font-semibold tracking-wider uppercase flex items-center mb-1">
-                  <span className="text-[#94A3B8]">Workspace</span>
-                  <span className="mx-1.5 text-[#94A3B8] font-normal">/</span>
-                  <span className="text-[#0F172A] dark:text-slate-100 font-bold">Documents</span>
+                  <span className="text-[var(--text-4)]">Workspace</span>
+                  <span className="mx-1.5 text-[var(--text-4)] font-normal">/</span>
+                  <span className="text-[var(--text-1)] font-bold">Documents</span>
                 </div>
               </div>
             ) : (
@@ -431,44 +430,36 @@ export default function AppShell({ children, title, subtitle, action, publicPage
 
       {/* ── Logout Confirmation Modal ── */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none">
-          {/* Backdrop */}
+        <div className="lg-backdrop" onClick={() => setShowLogoutModal(false)}>
           <div
-            className="absolute inset-0 bg-black/45 backdrop-blur-sm transition-opacity duration-300"
-            onClick={() => setShowLogoutModal(false)}
-          />
-          {/* Modal Container */}
-          <div
-            className="relative bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 shadow-2xl max-w-sm w-full z-10 transition-all duration-300 transform scale-100"
+            className="lg-card"
             role="dialog"
             aria-modal="true"
+            onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-[17px] font-semibold text-[var(--text-1)] tracking-tight">
-              Sign out?
-            </h3>
-            <p className="text-[13px] font-normal text-[var(--text-3)] mt-2 leading-relaxed">
-              Are you sure you want to sign out of QuizGenerator?
-            </p>
-            <div className="flex gap-2.5 mt-5">
-              <button
-                type="button"
-                onClick={() => setShowLogoutModal(false)}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-3)] text-sm font-semibold hover:bg-[var(--bg-2)] hover:text-[var(--text-1)] transition-all cursor-pointer active:scale-98"
-                autoFocus
-              >
+            <div className="lg-card-content">
+              <div className="lg-icon lg-icon-danger">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15" />
+                </svg>
+              </div>
+              <h3 className="lg-title">Sign out?</h3>
+              <p className="lg-message">Are you sure you want to sign out of QuizGenerator?</p>
+            </div>
+            <div className="lg-divider" />
+            <div className="lg-btn-row">
+              <button className="lg-btn lg-btn-secondary" onClick={() => setShowLogoutModal(false)} autoFocus>
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-500 transition-all cursor-pointer active:scale-98 shadow-sm"
-              >
+              <div className="lg-btn-separator" />
+              <button className="lg-btn lg-btn-destructive" onClick={handleSignOut}>
                 Sign Out
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

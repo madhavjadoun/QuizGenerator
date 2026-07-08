@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import dynamic from "next/dynamic";
-import uploadAnimation from "../../public/upload.json";
 import OrbitLoader from "@/components/app/OrbitLoader";
 import NavbarLogo from "@/components/layout/NavbarLogo";
 import LogoSVG from "@/components/layout/LogoSVG";
@@ -81,7 +80,7 @@ export default function WelcomePage() {
 
 
   const [mounted, setMounted] = useState(false);
-
+  const [uploadAnimData, setUploadAnimData] = useState<Record<string, unknown> | null>(null);
   const [dragging, setDragging] = useState(false);
   const [dropped, setDropped] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -158,6 +157,9 @@ export default function WelcomePage() {
   useEffect(() => {
     setMounted(true);
     document.documentElement.classList.remove("dark");
+    import("../../public/upload.json").then((mod) => {
+      setUploadAnimData(mod.default);
+    });
   }, []);
 
   /* Check session on mount to redirect authenticated users */
@@ -503,9 +505,9 @@ export default function WelcomePage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center p-3">
                       <div className="w-14 h-14 flex items-center justify-center mb-2.5 lottie-upload">
-                        {mounted ? (
+                        {mounted && uploadAnimData ? (
                           <Lottie
-                            animationData={uploadAnimation}
+                            animationData={uploadAnimData}
                             loop={true}
                             autoplay={true}
                             style={{ width: "100%", height: "100%" }}
@@ -1010,95 +1012,40 @@ export default function WelcomePage() {
 
     {/* Centered Authentication Required Modal */}
     {showAuthModal && (
-      <>
-        {/* Backdrop Overlay (Sibling to prevent layout flex constraints) */}
-        <div 
-          className="fixed inset-0 w-screen h-screen z-50 backdrop-blur-[10px] animate-in fade-in duration-200"
-          style={{ backgroundColor: "rgba(15, 23, 42, 0.45)" }}
-          onClick={() => setShowAuthModal(false)}
-        />
-        
-        {/* Modal Card Box */}
-        <div 
-          className="fixed z-[51] bg-white dark:bg-[#121826] flex flex-col items-center text-center flex-shrink-0 animate-in zoom-in-95 duration-200"
-          style={{ 
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '420px', 
-            maxWidth: 'calc(100vw - 32px)',
-            borderRadius: '24px',
-            border: '1px solid rgba(15, 23, 42, 0.06)',
-            boxShadow: '0 24px 80px rgba(15, 23, 42, 0.12)',
-            padding: '36px'
-          }}
-        >
-          {/* Circular Shield Icon */}
-          <div 
-            className="rounded-full bg-[#f8fafc] dark:bg-[#1e293b] border border-zinc-200/50 dark:border-[#24324a] flex items-center justify-center text-[#0f172a] dark:text-[#f8fafc] shadow-sm flex-shrink-0"
-            style={{ 
-              width: "48px", 
-              height: "48px",
-              marginBottom: "20px"
-            }}
-          >
-            <svg className="w-5.5 h-5.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-            </svg>
-          </div>
-          
-          <div className="space-y-2 flex-shrink-0 mb-6">
-            <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Sign in to continue</h3>
-            <p 
-              className="text-xs text-zinc-500 dark:text-zinc-400 font-medium"
-              style={{
-                maxWidth: "340px",
-                margin: "auto",
-                lineHeight: "1.6"
-              }}
-            >
+      <div className="lg-backdrop" onClick={() => setShowAuthModal(false)}>
+        <div className="lg-card" onClick={e => e.stopPropagation()}>
+          <div className="lg-card-content">
+            <div className="lg-icon lg-icon-neutral">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <h3 className="lg-title">Sign in to continue</h3>
+            <p className="lg-message">
               Upload PDFs, generate AI quizzes and sync your progress securely across all devices.
             </p>
           </div>
-          
-          <div className="flex items-center gap-3 w-full mb-6 flex-shrink-0">
-            <button
-              onClick={() => setShowAuthModal(false)}
-              className="flex-1 text-xs font-bold transition-all cursor-pointer flex items-center justify-center flex-shrink-0 hover:bg-[#f8fafc] dark:hover:bg-zinc-800"
-              style={{
-                height: "48px",
-                borderRadius: "12px",
-                border: "1px solid var(--border)",
-                backgroundColor: "transparent",
-                color: "var(--text-3)"
-              }}
-            >
+          <div className="lg-divider" />
+          <div className="lg-btn-row">
+            <button className="lg-btn lg-btn-secondary" onClick={() => setShowAuthModal(false)}>
               Not Now
             </button>
+            <div className="lg-btn-separator" />
             <button
+              className="lg-btn lg-btn-primary"
               onClick={() => {
                 setShowAuthModal(false);
                 router.push("/login");
               }}
-              className="flex-1 text-xs font-bold transition-all shadow-md hover:translate-y-[-1px] cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 grad-btn"
-              style={{
-                height: "48px",
-                borderRadius: "12px",
-                border: "none"
-              }}
             >
-              Continue <span className="text-sm font-normal">→</span>
+              Continue →
             </button>
           </div>
-          
-          {/* Trust Text */}
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium flex items-center gap-1 flex-shrink-0">
-            <span>✓</span> Protected by secure authentication.
-          </p>
         </div>
-      </>
+      </div>
     )}
+
+
   </div>
 );
 }

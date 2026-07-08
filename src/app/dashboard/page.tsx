@@ -143,10 +143,13 @@ export default function DashboardPage() {
               cache: "no-store",
             });
             if (credRes.ok) {
-              const credData = await credRes.json();
-              creditsRemaining = credData.credits_remaining;
-              creditsLimit = credData.credits_limit;
-              setCreditsResetAt(credData.reset_at ?? null);
+              const contentType = credRes.headers.get("content-type");
+              if (contentType && contentType.includes("application/json")) {
+                const credData = await credRes.json();
+                creditsRemaining = credData.credits_remaining;
+                creditsLimit = credData.credits_limit;
+                setCreditsResetAt(credData.reset_at ?? null);
+              }
             }
           }
         } catch (credErr) {
@@ -188,8 +191,12 @@ export default function DashboardPage() {
               cache: "no-store",
             });
             if (res.ok) {
-              const quizData = await res.json();
-              const dbQuizzes: DBQuiz[] = quizData.quizzes || [];
+              let quizData;
+              const contentType = res.headers.get("content-type");
+              if (contentType && contentType.includes("application/json")) {
+                quizData = await res.json();
+              }
+              const dbQuizzes: DBQuiz[] = quizData?.quizzes || [];
               
               dbQuizzes.forEach((q: DBQuiz) => {
                 // Track today's activity

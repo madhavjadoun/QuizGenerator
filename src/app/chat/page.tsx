@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import AppShell from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
+import Button from "@/components/ui/Button";
 
 interface DBQuestion {
   order_index: number;
@@ -211,11 +212,33 @@ export default function QuizPage() {
           });
 
           if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.detail || "Server failed to load quiz details.");
+            let errMsg = "Server failed to load quiz details.";
+            try {
+              const contentType = res.headers.get("content-type");
+              if (contentType && contentType.includes("application/json")) {
+                const errData = await res.json();
+                errMsg = errData.detail || errMsg;
+              } else {
+                const text = await res.text();
+                errMsg = text || errMsg;
+              }
+            } catch {}
+            throw new Error(errMsg);
           }
 
-          const quizData = await res.json();
+          let quizData;
+          try {
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              quizData = await res.json();
+            } else {
+              const text = await res.text();
+              throw new Error(text || "Invalid response format received from server.");
+            }
+          } catch (err) {
+            const errObj = err as Error;
+            throw new Error(errObj.message || "Failed to parse quiz response.");
+          }
 
           const dbQuestions = (quizData.quiz_questions || []).sort((a: DBQuestion, b: DBQuestion) => a.order_index - b.order_index);
           const mappedQuestions = dbQuestions.map((q: DBQuestion) => ({
@@ -317,12 +340,24 @@ export default function QuizPage() {
         }),
       });
 
-      const data = await res.json();
+      let data: { detail?: string; questions?: { question: string; options: string[]; correct: string; explanation: string }[]; quiz_id?: string; credits_remaining?: number } | null = null;
+      try {
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          throw new Error(text || `Request failed with status ${res.status}`);
+        }
+      } catch (err) {
+        const errObj = err as Error;
+        throw new Error(errObj.message || "Failed to generate quiz due to invalid server response.");
+      }
 
       // Handle 402 Insufficient Credits specifically
       if (res.status === 402) {
         // Refresh credits state so the badge updates
-        if (data.detail) {
+        if (data?.detail) {
           // Extract remaining from error detail if possible, else refetch
           try {
             const { data: { session: s2 } } = await supabase.auth.getSession();
@@ -340,11 +375,11 @@ export default function QuizPage() {
         }
         setIsCreditsError(true);
         setShowLimitModal(true);
-        throw new Error(data.detail || "You have run out of daily credits.");
+        throw new Error(data?.detail || "You have run out of daily credits.");
       }
 
-      if (!res.ok || !data.questions) {
-        throw new Error(data.detail || "Quiz generation failed.");
+      if (!res.ok || !data || !data.questions) {
+        throw new Error(data?.detail || "Quiz generation failed.");
       }
 
       // Map correct to correctAnswer to match frontend's type/state expectations
@@ -354,14 +389,15 @@ export default function QuizPage() {
       }));
 
       setQuestions(formattedQuestions);
-      setCurrentQuizId(data.quiz_id);
+      setCurrentQuizId(data.quiz_id || "");
 
       // Update credits badge optimistically from API response
-      if (typeof data.credits_remaining === "number") {
+      const remainingCredits = data.credits_remaining;
+      if (typeof remainingCredits === "number") {
         setCreditsInfo(prev => prev ? ({
           ...prev,
-          remaining: data.credits_remaining,
-          used: prev.limit - data.credits_remaining,
+          remaining: remainingCredits,
+          used: prev.limit - remainingCredits,
         }) : null);
       }
     } catch (err) {
@@ -441,8 +477,18 @@ export default function QuizPage() {
         });
 
         if (!submitRes.ok) {
-          const errData = await submitRes.json();
-          throw new Error(errData.detail || "Server failed to save quiz attempt.");
+          let errMsg = "Server failed to save quiz attempt.";
+          try {
+            const contentType = submitRes.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              const errData = await submitRes.json();
+              errMsg = errData.detail || errMsg;
+            } else {
+              const text = await submitRes.text();
+              errMsg = text || errMsg;
+            }
+          } catch {}
+          throw new Error(errMsg);
         }
 
         showToast("Quiz submitted & saved to history!", "success");
@@ -661,9 +707,9 @@ export default function QuizPage() {
                     ? "border-red-500"
                     : creditsInfo && numQuestions > creditsInfo.remaining && numQuestions > 0
                     ? "border-amber-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/10"
-                    : "border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10"
-                } bg-[var(--surface)] px-4 text-base font-semibold text-[var(--text-1)] tabular-nums focus:outline-none transition-all duration-250 hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                style={{ height: "48px", borderRadius: "12px" }}
+                    : "border-[var(--border)] focus:border-[var(--text-1)] focus:ring-2 focus:ring-[var(--text-1)]/5"
+                } bg-[var(--surface)] px-4 text-base font-semibold text-[var(--text-1)] tabular-nums focus:outline-none transition-all duration-250 hover:border-[var(--border-strong)] disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                style={{ height: "48px", borderRadius: "14px" }}
               />
             </div>
 
@@ -672,12 +718,12 @@ export default function QuizPage() {
             <div className="col-span-1 md:col-span-1 lg:col-span-1 relative">
               {creditsInfo !== null && creditsInfo.remaining === 0 && showTooltip && (
                 <div 
-                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3 py-2 bg-zinc-900 text-white dark:bg-zinc-800 dark:border-zinc-700 text-xs font-semibold rounded-lg shadow-lg border border-zinc-800 flex flex-col items-center text-center whitespace-nowrap z-30 animate-in fade-in slide-in-from-bottom-1 duration-150"
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3 py-2 bg-[var(--surface-2)] border border-[var(--border-strong)] text-[var(--text-1)] text-xs font-semibold rounded-lg shadow-lg flex flex-col items-center text-center whitespace-nowrap z-30 animate-in fade-in slide-in-from-bottom-1 duration-150"
                   style={{ pointerEvents: "none" }}
                 >
                   <span>Daily limit reached.</span>
                   <span>Come back tomorrow.</span>
-                  <div className="w-2 h-2 bg-zinc-900 dark:bg-zinc-800 border-r border-b border-zinc-800 dark:border-zinc-700 rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
+                  <div className="w-2 h-2 bg-[var(--surface-2)] border-r border-b border-[var(--border-strong)] rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2"></div>
                 </div>
               )}
               <div
@@ -692,12 +738,12 @@ export default function QuizPage() {
                 <button
                   onClick={handleGenerateQuiz}
                   disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
-                  className="w-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-sm font-semibold disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 btn-premium-shine"
-                  style={{ height: "48px", borderRadius: "12px" }}
+                  className="w-full text-sm font-bold disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 btn-premium-shine text-[var(--text-inv)]"
+                  style={{ height: "48px", borderRadius: "14px" }}
                 >
                   {generatingQuiz ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 text-white dark:text-zinc-950" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-4 w-4 text-[var(--text-inv)]" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
@@ -766,10 +812,10 @@ export default function QuizPage() {
 
         {/* 1. Loading/Generating State */}
         {generatingQuiz && (
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] p-7 shadow-sm w-full max-w-[1180px] mx-auto min-h-[180px] flex flex-col items-center justify-center text-center animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-7 shadow-sm w-full max-w-[1180px] mx-auto min-h-[180px] flex flex-col items-center justify-center text-center animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
             <h3 className="text-sm font-semibold text-[var(--text-1)] tracking-tight mb-4">Generating Quiz...</h3>
-            <div className="w-full max-w-[200px] h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden mb-4 relative">
-              <div className="absolute top-0 bottom-0 left-0 w-1/3 bg-[var(--indigo)] rounded-full animate-progress-loop"></div>
+            <div className="w-full max-w-[200px] h-1.5 bg-[var(--bg-2)] border border-[var(--border)] rounded-full overflow-hidden mb-4 relative">
+              <div className="absolute top-0 bottom-0 left-0 w-1/3 bg-[var(--text-1)] rounded-full animate-progress-loop"></div>
             </div>
             <p className="text-xs font-normal text-[var(--text-3)] status-fade-text"></p>
           </div>
@@ -777,7 +823,7 @@ export default function QuizPage() {
 
         {/* 2. Success Summary State */}
         {questions.length > 0 && !generatingQuiz && (
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] p-6 shadow-sm w-full max-w-[1180px] mx-auto animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 shadow-sm w-full max-w-[1180px] mx-auto animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -792,19 +838,19 @@ export default function QuizPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex flex-col gap-1">
                   <span className="text-card-label text-[10px]">Questions</span>
-                  <span className="px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)] tabular-nums">
+                  <span className="px-3 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)] tabular-nums">
                     {questions.length}
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-card-label text-[10px]">Time</span>
-                  <span className="px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)] tabular-nums">
+                  <span className="px-3 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)] tabular-nums">
                     {(questions.length * 0.15 + 1.2).toFixed(1)}s
                   </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-card-label text-[10px]">Difficulty</span>
-                  <span className="px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)]">
+                  <span className="px-3 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)]">
                     {difficulty}
                   </span>
                 </div>
@@ -816,7 +862,7 @@ export default function QuizPage() {
                     if (!startTime) setStartTime(Date.now());
                     document.getElementById("q-0")?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="w-full sm:w-auto px-5 h-10 rounded-lg bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold hover:-translate-y-[2px] active:translate-y-0 transition-all duration-200 cursor-pointer border border-transparent shadow-sm flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto px-5 h-10 rounded-[14px] text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 btn-premium-shine text-[var(--text-inv)]"
                 >
                   <span>Start Quiz</span>
                   <span>→</span>
@@ -828,7 +874,7 @@ export default function QuizPage() {
 
         {/* 3. Empty State (No selection) */}
         {!selectedDocId && !generatingQuiz && questions.length === 0 && (
-          <div className="w-full max-w-[560px] mx-auto border border-dashed border-slate-200 dark:border-zinc-700/60 bg-slate-50/50 dark:bg-zinc-900/10 rounded-[18px] py-5 px-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-250 h-[180px] hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
+          <div className="w-full max-w-[560px] mx-auto border border-dashed border-[var(--border)] bg-[var(--bg-2)]/60 rounded-xl py-5 px-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-250 h-[180px] hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
             <span className="text-2xl mb-2">📄</span>
             <h3 className="text-sm font-semibold text-[var(--text-1)] tracking-tight">No document selected</h3>
             <p className="text-xs font-normal text-[var(--text-3)] mt-0.5 leading-relaxed">
@@ -842,7 +888,7 @@ export default function QuizPage() {
 
         {/* 4. Selected Document Detail Card */}
         {selectedDoc && !generatingQuiz && questions.length === 0 && (
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] p-6 shadow-sm w-full max-w-[1180px] mx-auto animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-6 shadow-sm w-full max-w-[1180px] mx-auto animate-in fade-in duration-250 hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
             <h3 className="text-card-label mb-5">Selected Document</h3>
             
             <div className="flex items-center gap-2 mb-6 min-w-0">
@@ -855,13 +901,13 @@ export default function QuizPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-[var(--text-4)]">Size</span>
-                <span className="px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)] tabular-nums w-fit">
+                <span className="px-2.5 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)] tabular-nums w-fit">
                   {selectedDoc.file_size ? formatBytes(selectedDoc.file_size) : "N/A"}
                 </span>
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-[var(--text-4)]">Chunks</span>
-                <span className="px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)] tabular-nums w-fit">
+                <span className="px-2.5 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)] tabular-nums w-fit">
                   {selectedDoc.file_size ? Math.max(1, Math.round(selectedDoc.file_size / 800)) : "N/A"}
                 </span>
               </div>
@@ -873,7 +919,7 @@ export default function QuizPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-medium text-[var(--text-4)]">Uploaded</span>
-                <span className="px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-xs font-semibold text-[var(--text-1)] w-fit">
+                <span className="px-2.5 py-1 rounded-md bg-[var(--bg-2)] border border-[var(--border)] text-xs font-semibold text-[var(--text-1)] w-fit">
                   <FormattedDateTime date={selectedDoc.created_at} options={{ month: "short", day: "numeric" }} />
                 </span>
               </div>
@@ -888,22 +934,22 @@ export default function QuizPage() {
               <h2 className="text-lg font-semibold text-[var(--text-1)] tracking-tight">Practice Quiz</h2>
               {submitted && (
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 min-w-0">
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={handleDownloadReport}
-                    className="px-4 py-1.5 rounded-lg border border-[var(--border)] text-xs font-semibold hover:bg-[var(--bg-2)] transition-colors cursor-pointer flex items-center justify-center gap-1.5 w-full sm:w-auto"
-                    style={{ color: "var(--text-1)" }}
+                    className="h-8 text-[11px] gap-1.5 w-full sm:w-auto"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
                     <span>Download Report</span>
-                  </button>
-                  <div className={`px-4 py-1.5 rounded-full border text-sm font-bold flex items-center justify-center gap-2 w-full sm:w-auto ${
+                  </Button>
+                  <div className={`px-4 py-1.5 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 w-full sm:w-auto ${
                     score >= 7 
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/25" 
                       : score >= 5 
-                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20" 
-                      : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      ? "bg-amber-500/10 text-amber-500 border-amber-500/25" 
+                      : "bg-red-500/10 text-red-500 border-red-500/25"
                   }`}>
                     Score: {score} / {questions.length} ({Math.round((score / questions.length) * 100)}%)
                   </div>
@@ -917,26 +963,26 @@ export default function QuizPage() {
                 const isCorrectOption = (opt: string) => q.correctAnswer === opt;
                 
                 return (
-                  <div key={idx} id={`q-${idx}`} className="bg-[var(--surface)] rounded-[18px] p-4 sm:p-6 space-y-4 border border-[var(--border)] hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250 animate-in fade-in slide-in-from-bottom-3 min-w-0 overflow-hidden">
+                  <div key={idx} id={`q-${idx}`} className="bg-[var(--surface)] rounded-xl p-4 sm:p-6 space-y-4 border border-[var(--border)] hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250 animate-in fade-in slide-in-from-bottom-3 min-w-0 overflow-hidden">
                     <div className="flex gap-2 items-start min-w-0">
-                      <span className="font-semibold text-sm text-[var(--indigo)] bg-[var(--indigo)]/10 px-2 py-0.5 rounded-md flex-shrink-0">Q{idx + 1}</span>
+                      <span className="font-semibold text-sm text-[var(--text-1)] bg-[var(--text-1)]/10 px-2 py-0.5 rounded-md flex-shrink-0">Q{idx + 1}</span>
                       <h3 className="text-[15px] font-medium text-[var(--text-1)] pt-0.5 min-w-0 break-words leading-relaxed">{q.question}</h3>
                     </div>
 
                     <div className="grid grid-cols-1 gap-2.5 pl-0 sm:pl-9">
                       {q.options.map((opt, oIdx) => {
-                        let optStyle = "border-[var(--border)] bg-[var(--surface)] text-[var(--text-3)] hover:border-slate-300 dark:hover:border-zinc-700";
+                        let optStyle = "border-[var(--border)] bg-[var(--surface)] text-[var(--text-3)] hover:border-[var(--border-strong)]";
                         
                         if (submitted) {
                           if (isCorrectOption(opt)) {
-                            optStyle = "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium";
+                            optStyle = "border-[var(--success)]/30 bg-[var(--success)]/10 text-[var(--success)] font-medium";
                           } else if (isSelected(opt)) {
-                            optStyle = "border-rose-500/40 bg-rose-500/10 text-rose-400";
+                            optStyle = "border-[var(--danger)]/30 bg-[var(--danger)]/10 text-[var(--danger)]";
                           } else {
                             optStyle = "opacity-60 border-[var(--border)] bg-[var(--surface)] text-[var(--text-3)]";
                           }
                         } else if (isSelected(opt)) {
-                          optStyle = "border-[var(--indigo)] bg-[var(--indigo)]/5 text-[var(--text-1)] font-medium";
+                          optStyle = "border-[var(--text-1)] bg-[var(--text-1)]/5 text-[var(--text-1)] font-medium";
                         }
 
                         return (
@@ -970,8 +1016,8 @@ export default function QuizPage() {
                     {/* Explanations shown for wrong answers after submission */}
                     {submitted && !isSelected(q.correctAnswer) && (
                       <div className="pl-0 sm:pl-9 mt-2.5">
-                        <div className="p-3.5 rounded-lg bg-indigo-500/5 border border-indigo-500/15 text-[13px] leading-relaxed text-[var(--text-3)]">
-                          <p className="font-semibold text-[var(--indigo)] mb-1">Explanation from PDF:</p>
+                        <div className="p-3.5 rounded-xl bg-[var(--bg-2)] border border-[var(--border)] text-[13px] leading-relaxed text-[var(--text-3)]">
+                          <p className="font-semibold text-[var(--text-2)] mb-1">Explanation from PDF:</p>
                           <p className="italic">&ldquo;{q.explanation}&rdquo;</p>
                         </div>
                       </div>
@@ -984,13 +1030,14 @@ export default function QuizPage() {
             {/* Quiz submission actions */}
             {!submitted && (
               <div className="flex justify-stretch sm:justify-end pt-4">
-                <button
+                <Button
+                  variant="primary"
                   onClick={handleSubmitQuiz}
                   disabled={Object.keys(userAnswers).length < questions.length}
-                  className="w-full sm:w-auto px-6 h-11.5 rounded-lg bg-[var(--indigo)] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer shadow-sm hover:shadow-md"
+                  className="w-full sm:w-auto px-6 h-11 text-xs"
                 >
                   Submit Quiz
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -998,48 +1045,36 @@ export default function QuizPage() {
       </div>
 
       {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div 
-            className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-7 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center space-y-4"
-            style={{ minHeight: "220px" }}
-          >
-            {/* Warning Bolt Icon */}
-            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-              </svg>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-[var(--text-1)] tracking-tight">
-                Daily limit reached
-              </h3>
-              
-              <p className="text-sm font-medium text-[var(--text-2)]">
-                You&apos;ve used all {creditsInfo?.limit ?? 30} daily MCQs.
-              </p>
-              
-              <p className="text-xs font-normal text-[var(--text-4)] leading-relaxed">
-                Your limit resets automatically
+        <div className="lg-backdrop" onClick={() => setShowLimitModal(false)}>
+          <div className="lg-card" onClick={e => e.stopPropagation()}>
+            <div className="lg-card-content">
+              <div className="lg-icon lg-icon-warning">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h3 className="lg-title">Daily limit reached</h3>
+              <p className="lg-message">
+                You&apos;ve used all {creditsInfo?.limit ?? 30} daily MCQs. Your limit resets
                 {creditsInfo?.resetAt ? (
-                  <> at <FormattedDateTime date={creditsInfo.resetAt} type="time" /> (your local time).</>
+                  <> at <FormattedDateTime date={creditsInfo.resetAt} type="time" /> (your local time).</>  
                 ) : "."}
               </p>
             </div>
-            
-            <button
-              onClick={() => setShowLimitModal(false)}
-              className="w-full h-11 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 rounded-xl text-sm font-bold hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer mt-2"
-            >
-              Okay
-            </button>
+            <div className="lg-divider" />
+            <div className="lg-btn-row">
+              <button className="lg-btn lg-btn-primary" onClick={() => setShowLimitModal(false)}>
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}
 
+
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm z-50 flex items-center bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 px-4 py-3 rounded-lg shadow-lg border border-zinc-800 dark:border-slate-200 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm z-50 flex items-center bg-[var(--surface-2)] text-[var(--text-1)] px-4 py-3 rounded-xl shadow-lg border border-[var(--border-strong)] animate-in fade-in slide-in-from-bottom-5 duration-200">
           <span className="text-xs font-semibold break-words">{toast.message}</span>
         </div>
       )}

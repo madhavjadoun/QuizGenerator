@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
+import Button from "@/components/ui/Button";
 
 // ─── Toggle Component ─────────────────────────────────────────────────────────
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -13,11 +14,11 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
       role="switch"
       aria-checked={checked}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer flex-shrink-0 ${
-        checked ? "bg-[var(--indigo)]" : "bg-zinc-200 dark:bg-zinc-700"
+        checked ? "bg-[var(--text-1)]" : "bg-[var(--border-strong)]"
       }`}
     >
       <span
-        className={`inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+        className={`inline-block h-4.5 w-4.5 transform rounded-full bg-[var(--surface)] shadow-md transition-transform duration-200 ${
           checked ? "translate-x-6" : "translate-x-1"
         }`}
         style={{ width: "18px", height: "18px" }}
@@ -39,7 +40,7 @@ function SettingSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] overflow-hidden">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden">
       {/* Section Header */}
       <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--bg-2)]/20 min-w-0">
         <div className="w-8 h-8 rounded-lg bg-[var(--bg-2)] flex items-center justify-center text-[var(--text-2)] flex-shrink-0">
@@ -99,16 +100,15 @@ function DangerRow({
         <p className="text-sm font-semibold text-[var(--text-1)] tracking-tight">{label}</p>
         <p className="text-[12px] font-normal text-[var(--text-3)] mt-0.5 leading-relaxed break-words">{description}</p>
       </div>
-      <button
+      <Button
+        variant={buttonStyle === "severe" ? "destructive" : "secondary"}
         onClick={onClick}
-        className={`flex-shrink-0 w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-          buttonStyle === "severe"
-            ? "bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow"
-            : "bg-red-500/10 text-red-500 hover:bg-red-500/15 border border-red-500/20"
+        className={`flex-shrink-0 w-full sm:w-auto h-9 text-xs ${
+          buttonStyle !== "severe" ? "text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:border-red-500/25" : ""
         }`}
       >
         {buttonLabel}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -384,25 +384,26 @@ export default function SettingsPage() {
             label="Reset Local Preferences"
             description="Restore all settings above to their factory defaults. No data is deleted from the server."
           >
-            <button
+            <Button
+              variant="secondary"
               onClick={handleClearCache}
-              className="h-9 px-4 border border-[var(--border)] rounded-xl text-xs font-bold text-[var(--text-2)] hover:bg-[var(--bg-2)] transition-colors cursor-pointer"
+              className="h-9 text-xs"
             >
               Reset Defaults
-            </button>
+            </Button>
           </SettingRow>
         </SettingSection>
 
         {/* ── Danger Zone ── */}
-        <div className="bg-[var(--surface)] border border-red-200 dark:border-red-900/40 rounded-[18px] overflow-hidden">
-          <div className="px-6 py-4 border-b border-red-100 dark:border-red-900/30 flex items-center gap-3 bg-red-500/[0.03]">
-            <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+        <div className="bg-[var(--surface)] border border-red-500/20 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-red-500/10 flex items-center gap-3 bg-red-500/[0.01]">
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
               <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
               </svg>
             </div>
             <div>
-              <p className="text-base font-semibold text-red-600 dark:text-red-400 tracking-tight">Danger Zone</p>
+              <p className="text-base font-semibold text-red-600 dark:text-red-450 tracking-tight">Danger Zone</p>
               <p className="text-xs font-normal text-red-500/80 dark:text-red-400/70 mt-0.5 leading-relaxed">These actions are permanent and cannot be undone.</p>
             </div>
           </div>
@@ -427,21 +428,33 @@ export default function SettingsPage() {
 
       {/* ── Delete History Modal ── */}
       {showHistoryModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 px-4">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[20px] max-w-[420px] w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-4 mb-5">
-              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        <div className="lg-backdrop" onClick={() => setShowHistoryModal(false)}>
+          <div className="lg-card" onClick={e => e.stopPropagation()}>
+            <div className="lg-card-content">
+              <div className="lg-icon lg-icon-danger">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </div>
-              <div>
-                <h3 className="text-base font-semibold text-[var(--text-1)] tracking-tight">Clear Quiz History?</h3>
-                <p className="text-xs font-normal text-[var(--text-3)] mt-1 leading-relaxed">All your past quiz attempts, scores, and accuracy records will be permanently deleted. This cannot be undone.</p>
-              </div>
+              <h3 className="lg-title">Clear Quiz History?</h3>
+              <p className="lg-message">All past quiz attempts, scores, and accuracy records will be permanently deleted. This cannot be undone.</p>
             </div>
-            <div className="flex justify-end gap-2.5">
-              <button onClick={() => setShowHistoryModal(false)} disabled={historyLoading} className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold hover:bg-[var(--bg-2)] transition-colors cursor-pointer">Cancel</button>
-              <button onClick={triggerDeleteHistory} disabled={historyLoading} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer min-w-[100px] justify-center">
-                {historyLoading ? <><svg className="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4}/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Deleting…</> : "Clear History"}
+            <div className="lg-divider" />
+            <div className="lg-btn-row">
+              <button className="lg-btn lg-btn-secondary" onClick={() => setShowHistoryModal(false)} disabled={historyLoading}>
+                Cancel
+              </button>
+              <div className="lg-btn-separator" />
+              <button className="lg-btn lg-btn-destructive" onClick={triggerDeleteHistory} disabled={historyLoading}>
+                {historyLoading ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Deleting…
+                  </>
+                ) : "Clear History"}
               </button>
             </div>
           </div>
@@ -450,21 +463,33 @@ export default function SettingsPage() {
 
       {/* ── Purge Account Modal ── */}
       {showAccountModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 px-4">
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[20px] max-w-[420px] w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-4 mb-5">
-              <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <div className="lg-backdrop" onClick={() => setShowAccountModal(false)}>
+          <div className="lg-card" onClick={e => e.stopPropagation()}>
+            <div className="lg-card-content">
+              <div className="lg-icon lg-icon-warning">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
               </div>
-              <div>
-                <h3 className="text-base font-semibold text-[var(--text-1)] tracking-tight">Purge All Account Data?</h3>
-                <p className="text-xs font-normal text-[var(--text-3)] mt-1 leading-relaxed">This will permanently erase <span className="font-semibold text-red-500">every document, quiz, chunk, and score</span> associated with your account. You will be signed out. This is irreversible.</p>
-              </div>
+              <h3 className="lg-title">Purge All Account Data?</h3>
+              <p className="lg-message">Every document, quiz, chunk, and score will be permanently erased. You will be signed out. This is irreversible.</p>
             </div>
-            <div className="flex justify-end gap-2.5">
-              <button onClick={() => setShowAccountModal(false)} disabled={accountLoading} className="px-4 py-2 border border-[var(--border)] rounded-xl text-xs font-semibold hover:bg-[var(--bg-2)] transition-colors cursor-pointer">Cancel</button>
-              <button onClick={triggerDeleteAccountData} disabled={accountLoading} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer min-w-[110px] justify-center">
-                {accountLoading ? <><svg className="animate-spin h-3 w-3 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4}/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Purging…</> : "Purge Data"}
+            <div className="lg-divider" />
+            <div className="lg-btn-row">
+              <button className="lg-btn lg-btn-secondary" onClick={() => setShowAccountModal(false)} disabled={accountLoading}>
+                Cancel
+              </button>
+              <div className="lg-btn-separator" />
+              <button className="lg-btn lg-btn-destructive" onClick={triggerDeleteAccountData} disabled={accountLoading}>
+                {accountLoading ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Purging…
+                  </>
+                ) : "Purge Data"}
               </button>
             </div>
           </div>

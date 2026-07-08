@@ -2,18 +2,21 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import loaderAnimation from "../../../public/loader.json";
 
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 export default function OrbitLoader({ size = 32 }: { size?: number }) {
   const [mounted, setMounted] = useState(false);
+  const [animationData, setAnimationData] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    import("../../../public/loader.json").then((mod) => {
+      setAnimationData(mod.default);
+    });
   }, []);
 
-  if (!mounted) {
+  if (!mounted || !animationData) {
     return (
       <div 
         style={{ width: `${size}px`, height: `${size}px` }} 
@@ -34,7 +37,7 @@ export default function OrbitLoader({ size = 32 }: { size?: number }) {
       role="status"
     >
       <Lottie
-        animationData={loaderAnimation}
+        animationData={animationData}
         loop={true}
         autoplay={true}
         style={{ width: "100%", height: "100%" }}
