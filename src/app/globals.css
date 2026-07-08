@@ -1039,9 +1039,15 @@ next-dev-indicator,
   animation: ios-alert-enter 300ms cubic-bezier(0.28, 0.84, 0.42, 1) forwards;
 
   /* Glass surface — you see the background through it */
-  background: rgba(28, 28, 30, 0.68);
-  backdrop-filter: blur(52px) saturate(210%) brightness(1.08);
-  -webkit-backdrop-filter: blur(52px) saturate(210%) brightness(1.08);
+  background: rgba(28, 28, 30, 0.95);
+  
+  /* Fallback for standard CSS blur support */
+  backdrop-filter: blur(80px) saturate(210%) brightness(1.08);
+  -webkit-backdrop-filter: blur(80px) saturate(210%) brightness(1.08);
+
+  /* Apple WWDC 2025 Liquid Glass material using SVG refraction, specular light & caustics */
+  backdrop-filter: url(#liquid-glass-dark);
+  -webkit-backdrop-filter: url(#liquid-glass-dark);
 
   /* Fine outer border + deep shadow */
   border: 0.5px solid rgba(255, 255, 255, 0.22);
@@ -1054,9 +1060,16 @@ next-dev-indicator,
 
 /* Light mode card */
 :root:not(.dark) .lg-card {
-  background: rgba(242, 242, 247, 0.72);
-  backdrop-filter: blur(52px) saturate(210%);
-  -webkit-backdrop-filter: blur(52px) saturate(210%);
+  background: rgba(242, 242, 247, 0.95);
+  
+  /* Fallback for standard CSS blur support */
+  backdrop-filter: blur(80px) saturate(210%);
+  -webkit-backdrop-filter: blur(80px) saturate(210%);
+
+  /* Apple WWDC 2025 Liquid Glass material using SVG refraction, specular light & caustics */
+  backdrop-filter: url(#liquid-glass-light);
+  -webkit-backdrop-filter: url(#liquid-glass-light);
+
   border: 0.5px solid rgba(0, 0, 0, 0.14);
   box-shadow:
     0 0 0 0.5px rgba(0, 0, 0, 0.12),
@@ -1126,24 +1139,24 @@ next-dev-indicator,
 /* ── Horizontal divider between content and buttons ── */
 .lg-divider {
   height: 0.5px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.28);
   flex-shrink: 0;
 }
 
 :root:not(.dark) .lg-divider {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.20);
 }
 
 /* ── Vertical divider between side-by-side buttons ── */
 .lg-btn-separator {
   width: 0.5px;
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.28);
   flex-shrink: 0;
   align-self: stretch;
 }
 
 :root:not(.dark) .lg-btn-separator {
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.20);
 }
 
 /* ── Button row ── */

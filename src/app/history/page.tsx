@@ -706,6 +706,7 @@ export default function HistoryPage() {
             <div className="lg-switch-container">
               <div className="lg-switch-row">
                 <div>
+                  
                   <p className="lg-switch-label">Include Answers & Explanations</p>
                   <p className="lg-switch-sublabel">Correct answers and AI explanations.</p>
                 </div>
