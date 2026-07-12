@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/app/AppShell";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/ui/Button";
 
@@ -175,7 +176,7 @@ export default function SettingsPage() {
   const handleSaveMcqCount = (val: number) => {
     setDefaultMcqCount(val);
     localStorage.setItem(`settings_mcq_count_${userId}`, String(val));
-    showToast(`Default MCQ count set to ${val}`);
+    showToast(`Default question count set to ${val}`);
   };
 
   const handleClearCache = () => {
@@ -261,10 +262,48 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <AppShell title="Settings" subtitle="Configure your experience.">
-        <div className="flex items-center justify-center py-32">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-[var(--indigo)] border-t-transparent rounded-full animate-spin" />
-            <p className="text-xs font-medium text-[var(--text-4)]">Loading preferences…</p>
+        <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-pulse">
+          {/* Account info card skeleton */}
+          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] p-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <Skeleton className="w-11 h-11 rounded-full flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4.5 w-1/4 rounded-lg" />
+                <Skeleton className="h-3 w-1/3 rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-24 rounded-xl flex-shrink-0" />
+          </div>
+
+          {/* Section 1 skeleton */}
+          <div className="glass-card rounded-[20px] p-6 space-y-5">
+            <div className="flex items-start gap-4">
+              <Skeleton className="h-5 w-5 rounded-md flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4.5 w-1/5 rounded-lg" />
+                <Skeleton className="h-3 w-1/3 rounded-lg" />
+              </div>
+            </div>
+            <div className="border-t border-[var(--border)] pt-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1.5 flex-1">
+                  <Skeleton className="h-4 w-1/4 rounded-lg" />
+                  <Skeleton className="h-3 w-1/2 rounded-lg" />
+                </div>
+                <Skeleton className="h-8 w-24 rounded-lg" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2 skeleton */}
+          <div className="glass-card rounded-[20px] p-6 space-y-5">
+            <div className="flex items-start gap-4">
+              <Skeleton className="h-5 w-5 rounded-md flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4.5 w-1/6 rounded-lg" />
+                <Skeleton className="h-3 w-1/4 rounded-lg" />
+              </div>
+            </div>
           </div>
         </div>
       </AppShell>
@@ -329,7 +368,7 @@ export default function SettingsPage() {
           description="Control quiz generation and flow defaults."
         >
           <SettingRow
-            label="Default MCQ Count"
+            label="Default Question Count"
             description="Number of questions pre-filled when opening the quiz generator."
           >
             <select

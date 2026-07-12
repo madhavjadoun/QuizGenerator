@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
-import OrbitLoader from "@/components/app/OrbitLoader";
+import { Skeleton, HistoryItemSkeleton } from "@/components/ui/Skeleton";
 import { CheckCircle2, Download as DownloadIcon, BookOpen, FileText } from "lucide-react";
 import Image from "next/image";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
@@ -28,6 +28,7 @@ interface DBQuiz {
   created_at: string;
   total_questions: number;
   status: string;
+  quiz_type?: string;
   quiz_questions: Array<{
     id: string;
     question: string;
@@ -88,10 +89,30 @@ const QuizCard = React.memo(function QuizCard({
             </div>
           </div>
 
-          {/* Completed badge */}
-          <span className="px-1.5 py-0.5 rounded border border-[var(--border)] text-[9px] font-medium text-[var(--text-4)] bg-transparent select-none">
-            {attempt.completed ? "Completed" : "Generated"}
-          </span>
+          {/* Completed badge + Type badge */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {/* Quiz Type badge */}
+            {(() => {
+              const qt = quiz.quiz_type || "mcq";
+              const typeMap: Record<string, { label: string; color: string; bg: string; border: string }> = {
+                mcq:  { label: "MCQ",        color: "#6366f1", bg: "rgba(99,102,241,0.08)",  border: "rgba(99,102,241,0.25)" },
+                tf:   { label: "T/F",        color: "#8b5cf6", bg: "rgba(139,92,246,0.08)",  border: "rgba(139,92,246,0.25)" },
+                fib:  { label: "Fill Blanks", color: "#d97706", bg: "rgba(217,119,6,0.08)",   border: "rgba(217,119,6,0.25)" },
+              };
+              const t = typeMap[qt] || typeMap["mcq"];
+              return (
+                <span
+                  className="px-1.5 py-0.5 rounded border text-[9px] font-bold select-none"
+                  style={{ color: t.color, background: t.bg, borderColor: t.border }}
+                >
+                  {t.label}
+                </span>
+              );
+            })()}
+            <span className="px-1.5 py-0.5 rounded border border-[var(--border)] text-[9px] font-medium text-[var(--text-4)] bg-transparent select-none">
+              {attempt.completed ? "Completed" : "Generated"}
+            </span>
+          </div>
         </div>
 
         {/* Stats Rows */}
@@ -370,9 +391,12 @@ export default function HistoryPage() {
         };
 
         const correctAnswer = getAnswerText(q.correct_option);
+        // Filter out empty options (T/F only has A/B filled)
+        const allOptions = [q.option_a, q.option_b, q.option_c, q.option_d];
+        const validOptions = allOptions.filter(opt => opt && opt.trim() !== "");
         return {
           question: q.question,
-          options: [q.option_a, q.option_b, q.option_c, q.option_d],
+          options: validOptions,
           correctAnswer,
           userAnswer: attempt.user_answers[String(q.order_index)] || "",
           explanation: q.explanation
@@ -388,6 +412,7 @@ export default function HistoryPage() {
       wrongAnswers: attempt.wrong,
       accuracy: attempt.accuracy,
       timeTaken: formatTime(attempt.time_taken),
+      quizType: quiz.quiz_type || "mcq",
       questions: questionsList
     };
 
@@ -581,11 +606,10 @@ export default function HistoryPage() {
         )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <OrbitLoader size={44} />
-            <p className="text-sm font-medium text-[var(--text-4)]">
-              Loading your quiz history...
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
           </div>
         ) : quizzes.length === 0 ? (
           <div className="w-full max-w-[560px] mx-auto border border-dashed border-[var(--border)] bg-[var(--bg-2)]/30 rounded-[12px] py-12 px-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-250 min-h-[250px]">

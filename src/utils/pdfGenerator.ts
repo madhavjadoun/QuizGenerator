@@ -17,6 +17,7 @@ export interface QuizReportData {
   wrongAnswers: number;
   accuracy: number;
   timeTaken: string;
+  quizType?: string;  // 'mcq' | 'tf' | 'fib'
   questions: QuizReportQuestion[];
 }
 
@@ -131,7 +132,8 @@ export function downloadQuizReport(data: QuizReportData, withAnswers: boolean = 
     doc.roundedRect(ML, statsY, TW, statsH, 3, 3, "FD");
 
     const statItems = [
-      { label: "TOTAL MCQs",  value: String(data.totalQuestions),  color: C.black  },
+      { label: data.quizType === "tf" ? "TOTAL T/F" : data.quizType === "fib" ? "FILL BLANKS" : "TOTAL MCQs",
+        value: String(data.totalQuestions), color: C.black  },
       { label: "CORRECT",     value: String(data.correctAnswers),   color: C.green  },
       { label: "WRONG",       value: String(data.wrongAnswers),     color: C.red    },
       { label: "ACCURACY",    value: `${data.accuracy}%`,           color: C.indigo },
@@ -160,7 +162,10 @@ export function downloadQuizReport(data: QuizReportData, withAnswers: boolean = 
   // -- Section Heading --
   font("bold", 13);
   setColor(C.black);
-  doc.text(withAnswers ? "Detailed Question Review" : "Questions", ML, y);
+  const sectionHeading = withAnswers
+    ? "Detailed Question Review"
+    : (data.quizType === "tf" ? "True / False Questions" : data.quizType === "fib" ? "Fill in the Blanks" : "Questions");
+  doc.text(sectionHeading, ML, y);
   y += 2;
   setDraw(C.border);
   doc.setLineWidth(0.3);
@@ -182,7 +187,9 @@ export function downloadQuizReport(data: QuizReportData, withAnswers: boolean = 
 
     let optH = 0;
     const optLinesArr: string[][] = [];
-    q.options.forEach((opt, oi) => {
+    // Filter out empty options (T/F only has 2, MCQ/FIB have 4)
+    const validOptions = q.options.filter(opt => opt && opt.trim() !== "");
+    validOptions.forEach((opt, oi) => {
       font("bold", 8.5);
       const label = `${String.fromCharCode(65 + oi)}.`;
       const labelW = doc.getTextWidth(label);
@@ -238,8 +245,8 @@ export function downloadQuizReport(data: QuizReportData, withAnswers: boolean = 
     doc.text(qLines, ix, y);
     y += qH + 3;
 
-    // Options A-D
-    q.options.forEach((opt, oi) => {
+    // Options (only non-empty ones)
+    validOptions.forEach((opt, oi) => {
       font("bold", 8.5);
       setColor(C.slate);
       const label = `${String.fromCharCode(65 + oi)}.`;

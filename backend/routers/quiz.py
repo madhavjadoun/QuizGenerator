@@ -1,7 +1,7 @@
 """
 routers/quiz.py — Quiz generation and history endpoints.
 
-POST /quiz/generate              — generate an MCQ quiz from a document's chunks
+POST /quiz/generate              — generate a quiz (MCQ/T-F/FIB) from a document's chunks
 GET  /quiz/history/{document_id} — return all quizzes for a document
 """
 
@@ -52,6 +52,11 @@ class GenerateQuizRequest(BaseModel):
     num_questions: int = 10
     """How many questions to generate (limit 50, defaults to 10)."""
 
+    quiz_type: str = "mcq"
+    """Type of quiz: 'mcq' (default), 'tf' (True/False), or 'fib' (Fill in the Blanks)."""
+
+    difficulty: str = "Medium"
+    """Difficulty level: 'Easy', 'Medium' (default), or 'Hard'."""
 
 class SubmitQuizRequest(BaseModel):
     """Request body for POST /quiz/submit."""
@@ -111,6 +116,8 @@ async def generate_quiz_endpoint(
     async with quiz_semaphore:
         document_id = body.document_id.strip()
         num_questions = body.num_questions
+        quiz_type = body.quiz_type.strip().lower() if body.quiz_type else "mcq"
+        difficulty = body.difficulty.strip() if body.difficulty else "Medium"
 
         if not document_id:
             raise HTTPException(
@@ -122,6 +129,18 @@ async def generate_quiz_endpoint(
             raise HTTPException(
                 status_code=400,
                 detail="Number of questions (num_questions) must be between 1 and 50."
+            )
+
+        if quiz_type not in ("mcq", "tf", "fib"):
+            raise HTTPException(
+                status_code=400,
+                detail="quiz_type must be one of: 'mcq', 'tf', 'fib'."
+            )
+
+        if difficulty not in ("Easy", "Medium", "Hard"):
+            raise HTTPException(
+                status_code=400,
+                detail="difficulty must be one of: 'Easy', 'Medium', 'Hard'."
             )
 
         # Verify ownership of the document
@@ -141,7 +160,7 @@ async def generate_quiz_endpoint(
                 raise HTTPException(
                     status_code=402,
                     detail=(
-                        f"Insufficient credits: generating {num_questions} MCQs requires {num_questions} credits, "
+                        f"Insufficient credits: generating {num_questions} questions requires {num_questions} credits, "
                         f"but you only have {remaining} remaining today (limit: {credits_limit}/day). "
                         f"Your credits reset at midnight UTC."
                     ),
@@ -155,7 +174,7 @@ async def generate_quiz_endpoint(
                 detail="Failed to check daily credits.",
             ) from exc
 
-        print(f"[quiz] Generate request — document_id='{document_id}', user_id='{user_id}', num_questions={num_questions}")
+        print(f"[quiz] Generate request — document_id='{document_id}', user_id='{user_id}', num_questions={num_questions}, quiz_type={quiz_type}, difficulty={difficulty}")
 
         # ── 1. Fetch chunks ───────────────────────────────────────────────────────
         try:
@@ -201,9 +220,9 @@ async def generate_quiz_endpoint(
         print(f"[quiz] Combined context length: {len(combined_text)} chars")
 
         # ── 3. Generate quiz via Gemini ───────────────────────────────────────────
-        print(f"[quiz] Calling Gemini/Quiz API to generate {num_questions} questions...")
+        print(f"[quiz] Calling Gemini/Quiz API to generate {num_questions} {quiz_type.upper()} questions ({difficulty})...")
         try:
-            questions = generate_quiz(combined_text, num_questions=num_questions)
+            questions = generate_quiz(combined_text, num_questions=num_questions, quiz_type=quiz_type, difficulty=difficulty)
         except ValueError as exc:
             print(f"[quiz] Quiz generation validation failure: {exc}")
             raise HTTPException(
@@ -228,7 +247,7 @@ async def generate_quiz_endpoint(
         # ── 4. Persist quiz to Supabase ───────────────────────────────────────────
         print("[quiz] Saving quiz to Supabase...")
         try:
-            quiz_id = save_quiz(document_id=document_id, questions=questions)
+            quiz_id = save_quiz(document_id=document_id, questions=questions, quiz_type=quiz_type)
         except Exception as exc:
             print(f"[quiz] Failed to save quiz for document_id='{document_id}': {exc}")
             raise HTTPException(

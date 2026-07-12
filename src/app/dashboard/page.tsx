@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
 import { supabase } from "@/lib/supabase";
-import OrbitLoader from "@/components/app/OrbitLoader";
+import { Skeleton, StatsCardSkeleton } from "@/components/ui/Skeleton";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
 
 interface DBQuiz {
@@ -55,7 +55,7 @@ const QUICK = [
   {
     href: "/chat",
     label: "Generate PDF Quiz",
-    sub: "Create MCQ quizzes from your files",
+    sub: "Create quizzes from your files",
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.85}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
@@ -262,8 +262,8 @@ export default function DashboardPage() {
           },
           {
             label: "Today's Credits",
-            value: `${creditsRemaining} / ${creditsLimit} MCQs Remaining`,
-            delta: `Resets at midnight`,
+            value: `${creditsRemaining} / ${creditsLimit}`,
+            delta: `Questions Remaining`,
             deltaUp: null,
             progress: creditsProgress,
             accentColor: "var(--indigo)",
@@ -369,11 +369,49 @@ export default function DashboardPage() {
     <AppShell title="Dashboard" subtitle="Overview of your private knowledge base.">
       <div className="max-w-7xl mx-auto space-y-6">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <OrbitLoader size={44} />
-            <p className="text-sm font-medium text-[var(--text-4)]">
-              Loading workspace metrics...
-            </p>
+          <div className="space-y-6">
+            {/* Stats skeleton grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+              <StatsCardSkeleton />
+            </div>
+
+            {/* Asymmetrical main content skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+              <div className="lg:col-span-3 space-y-5">
+                <div className="glass-card rounded-2xl p-5 space-y-4">
+                  <Skeleton className="h-5 w-40 rounded-lg" />
+                  <div className="divide-y divide-[var(--border)]">
+                    <div className="py-3.5 flex items-center gap-3">
+                      <Skeleton className="h-9 w-9 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-1/3 rounded-lg" />
+                        <Skeleton className="h-3 w-1/4 rounded-lg" />
+                      </div>
+                    </div>
+                    <div className="py-3.5 flex items-center gap-3">
+                      <Skeleton className="h-9 w-9 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-1/4 rounded-lg" />
+                        <Skeleton className="h-3 w-1/5 rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="lg:col-span-2">
+                <div className="glass-card rounded-2xl p-5 space-y-4 h-full">
+                  <Skeleton className="h-5 w-32 rounded-lg" />
+                  <div className="space-y-3">
+                    <Skeleton className="h-8 w-full rounded-xl" />
+                    <Skeleton className="h-8 w-full rounded-xl" />
+                    <Skeleton className="h-8 w-full rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <>
@@ -382,7 +420,7 @@ export default function DashboardPage() {
               {stats.map((s) => (
                 <div
                   key={s.label}
-                  className="glass-card rounded-2xl p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between min-h-[168px] min-w-0"
+                  className="glass-card rounded-2xl p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between min-h-[148px] min-w-0"
                 >
                   {/* Card header: label + icon */}
                   <div>
@@ -408,7 +446,7 @@ export default function DashboardPage() {
                             <span className="text-stat-value text-base flex-shrink-0">{s.activityData.quizzesToday}</span>
                           </div>
                           <div className="flex justify-between items-center gap-2">
-                            <span className="text-[12px] font-medium text-[var(--text-3)] min-w-0 leading-snug">MCQs Generated</span>
+                            <span className="text-[12px] font-medium text-[var(--text-3)] min-w-0 leading-snug">Questions Generated</span>
                             <span className="text-stat-value text-base flex-shrink-0">{s.activityData.mcqsToday}</span>
                           </div>
                           {s.activityData.lastTime && (
@@ -420,9 +458,16 @@ export default function DashboardPage() {
                         </div>
                       )
                     ) : (
-                      <p className="text-[22px] sm:text-2xl font-bold text-[var(--text-1)] tracking-tight leading-tight break-words mt-1">
-                        {s.value}
-                      </p>
+                      <div className="mt-1">
+                        <p className="text-[22px] sm:text-2xl font-bold text-[var(--text-1)] tracking-tight leading-tight break-words">
+                          {s.value}
+                        </p>
+                        {s.label === "Today's Credits" && (
+                          <p className="text-[11px] font-semibold text-[var(--text-3)] mt-0.5 leading-snug">
+                            Questions Remaining
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 

@@ -168,15 +168,18 @@ def get_chunks(document_id: str) -> list[dict[str, Any]]:
 
 # ── Quizzes ───────────────────────────────────────────────────────────────────
 
-def save_quiz(document_id: str, questions: list[dict[str, Any]]) -> str:
+def save_quiz(document_id: str, questions: list[dict[str, Any]], quiz_type: str = "mcq") -> str:
     """
     Persist a generated quiz to `quizzes` + all questions to `quiz_questions`.
 
     Each dict in `questions` must contain:
         question      (str)
-        options       (list[str], length 4)
+        options       (list[str], length 2 for T/F or 4 for MCQ/FIB)
         correct       (str, exact text of correct option)
         explanation   (str)
+
+    Args:
+        quiz_type: 'mcq', 'tf', or 'fib' — stored in the quizzes table.
 
     Returns:
         The UUID of the newly created quiz row.
@@ -188,6 +191,7 @@ def save_quiz(document_id: str, questions: list[dict[str, Any]]) -> str:
         "document_id":    document_id,
         "total_questions": len(questions),
         "status":         "generated",
+        "quiz_type":      quiz_type,
     }
     print(f"[supabase] Creating quiz for document_id='{document_id}' ({len(questions)} questions)")
     quiz_result = client.table("quizzes").insert(quiz_payload).execute()

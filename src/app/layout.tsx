@@ -24,18 +24,20 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://quizgens.tech"),
 
   title: {
-    default: "QuizGens – AI Quiz Generator | Generate MCQs from PDFs",
+    default: "QuizGens – AI Quiz Generator | Generate MCQs, T/F & Fill Blanks from PDFs",
     template: "%s | QuizGens",
   },
 
   description:
-    "Generate AI-powered MCQs from PDFs in seconds. Upload notes, textbooks, research papers, or study material and create quizzes instantly for exams and revision.",
+    "Generate AI-powered MCQs, True/False, and Fill in the Blanks from PDFs in seconds. Upload notes, textbooks, or study material and create quizzes instantly.",
 
   keywords: [
     "AI Quiz Generator",
     "PDF Quiz Generator",
     "Generate MCQs from PDF",
     "AI MCQ Generator",
+    "True or False Quiz Generator",
+    "Fill in the Blanks Generator",
     "Quiz Generator",
     "PDF to Quiz",
     "Exam Preparation",
@@ -61,7 +63,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "QuizGens – AI Quiz Generator",
     description:
-      "Upload PDFs and instantly generate AI-powered MCQs for smarter exam preparation.",
+      "Upload PDFs and instantly generate AI-powered MCQs, True/False, and Fill in the Blanks for smarter exam preparation.",
     url: "https://quizgens.tech",
     siteName: "QuizGens",
     locale: "en_US",
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "QuizGens – AI Quiz Generator",
-    description: "Generate AI-powered MCQs from PDFs instantly.",
+    description: "Generate AI-powered MCQs, True/False, and Fill in the Blanks from PDFs instantly.",
     images: ["/og-image.png"],
   },
 

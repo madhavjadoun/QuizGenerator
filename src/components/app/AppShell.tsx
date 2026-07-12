@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import BlurText from "@/components/ui/BlurText";
 import { supabase } from "@/lib/supabase";
-import OrbitLoader from "@/components/app/OrbitLoader";
+import { Skeleton } from "@/components/ui/Skeleton";
 import NavbarLogo from "@/components/layout/NavbarLogo";
 
 
@@ -258,9 +258,51 @@ export default function AppShell({ children, title, subtitle, action, publicPage
 
   if (userLoading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
-        <OrbitLoader size={48} />
-        <p className="text-xs text-[var(--text-3)] mt-4 font-mono animate-pulse">Establishing secure session…</p>
+      <div className="fixed inset-0 flex overflow-hidden app-bg" style={{ height: "100vh" }}>
+        {/* Mock Sidebar Skeleton */}
+        <aside
+          className="glass-sidebar hidden md:flex flex-col flex-shrink-0 z-10 border-r border-[var(--border)] overflow-hidden"
+          style={{ width: "240px", height: "100vh" }}
+        >
+          <div className="p-4 border-b border-[var(--border)] flex items-center gap-2">
+            <Skeleton className="h-6 w-6 rounded-md" />
+            <Skeleton className="h-4.5 w-24 rounded-lg" />
+          </div>
+          <div className="p-3 space-y-4 flex-1">
+            <div className="space-y-2.5">
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+            </div>
+          </div>
+        </aside>
+
+        {/* Mock Main Column Skeleton */}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative z-10">
+          {/* Header */}
+          <header className="glass-nav flex-shrink-0 flex items-center justify-between px-4 sm:px-5 h-[56px] border-b border-[var(--border)]">
+            <Skeleton className="h-4 w-32 rounded-lg" />
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-lg" />
+              <Skeleton className="h-9 w-9 rounded-xl" />
+            </div>
+          </header>
+          {/* Content */}
+          <main className="flex-1 p-4 sm:p-5 lg:p-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-16 rounded-full" />
+              <Skeleton className="h-6.5 w-48 rounded-lg" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-28 w-full rounded-2xl" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Skeleton className="h-40 w-full rounded-2xl" />
+                <Skeleton className="h-40 w-full rounded-2xl" />
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }
@@ -374,17 +416,31 @@ export default function AppShell({ children, title, subtitle, action, publicPage
                 className="h-9 w-9 rounded-xl object-cover cursor-pointer flex-shrink-0 hover:opacity-85 hover:scale-[1.05] active:scale-95 transition-all shadow-sm"
                 referrerPolicy="no-referrer"
                 title="Log out"
+                onError={(e) => {
+                  // If Google avatar fails to load, hide img and show initials fallback
+                  const target = e.currentTarget;
+                  const fallback = target.nextElementSibling as HTMLElement | null;
+                  target.style.display = "none";
+                  if (fallback) fallback.style.display = "flex";
+                }}
               />
-            ) : (
+            ) : null)}
+            {user && (!userAvatar || true) && (
               <div
                 onClick={() => setShowLogoutModal(true)}
-                className="h-9 w-9 rounded-xl flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 hover:opacity-85 hover:scale-[1.05] active:scale-95 transition-all shadow-sm"
-                style={{ background: "linear-gradient(135deg, var(--indigo), var(--violet))" }}
+                className="h-9 w-9 rounded-xl flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 hover:opacity-85 hover:scale-[1.05] active:scale-95 transition-all shadow-sm border border-transparent dark:border-[var(--border)]"
+                style={{
+                  background: theme === "dark"
+                    ? "linear-gradient(135deg, #18181b, #27272a)"
+                    : "linear-gradient(135deg, #0f172a, #1e293b)",
+                  display: userAvatar ? "none" : "flex",
+                }}
                 title="Log out"
               >
                 {userInitials}
               </div>
-            ))}
+            )}
+
           </div>
         </header>
 

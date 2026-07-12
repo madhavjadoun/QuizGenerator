@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import React from "react";
 import Link from "next/link";
 import AppShell from "@/components/app/AppShell";
-import OrbitLoader from "@/components/app/OrbitLoader";
+import { Skeleton, DocumentRowSkeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
 
@@ -513,7 +513,11 @@ export default function DocumentsPage() {
           <div
             className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 rounded-xl border border-[var(--border)] bg-[var(--bg-2)]/30"
           >
-            <OrbitLoader size={36} />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--bg-3)] dark:bg-zinc-800 animate-pulse flex-shrink-0">
+              <svg className="w-5 h-5 text-[var(--text-3)] animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-[var(--text-1)]">
@@ -570,11 +574,10 @@ export default function DocumentsPage() {
 
           {/* Cards content or loaders */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-3">
-              <OrbitLoader size={40} />
-              <p className="text-sm font-medium text-[var(--text-4)]">
-                Syncing with vector index...
-              </p>
+            <div className="divide-y divide-[var(--border)]">
+              <DocumentRowSkeleton />
+              <DocumentRowSkeleton />
+              <DocumentRowSkeleton />
             </div>
           ) : docs.length === 0 ? (
             <div className="text-center py-24 px-4 space-y-4">

@@ -62,6 +62,7 @@ export default function QuizPage() {
   // New SaaS Polishing States
   const [currentQuizId, setCurrentQuizId] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [quizType, setQuizType] = useState<string>("mcq");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeTaken, setTimeTaken] = useState<number>(0);
 
@@ -304,9 +305,9 @@ export default function QuizPage() {
     if (numQuestions < 1) {
       setMcqValidationError(true);
       if (!hasError) {
-        setErrorMsg("Please select a number of MCQs greater than 0.");
+        setErrorMsg("Please select a number of questions greater than 0.");
       } else {
-        setErrorMsg("Please select a document and enter a number of MCQs greater than 0.");
+        setErrorMsg("Please select a document and enter a number of questions greater than 0.");
       }
       hasError = true;
     }
@@ -337,6 +338,8 @@ export default function QuizPage() {
         body: JSON.stringify({
           document_id: selectedDocId,
           num_questions: numQuestions,
+          quiz_type: quizType,
+          difficulty: difficulty,
         }),
       });
 
@@ -521,6 +524,7 @@ export default function QuizPage() {
       wrongAnswers: totalQ - score,
       accuracy: Math.round((score / totalQ) * 100),
       timeTaken: formatTimeTaken(timeTaken),
+      quizType: quizType,
       questions: questions.map((q, idx) => ({
         question: q.question,
         options: q.options,
@@ -539,7 +543,7 @@ export default function QuizPage() {
   const selectedDocName = getDocumentDisplayName(selectedDoc);
 
   return (
-    <AppShell title="Quiz Generator" subtitle="Generate AI-powered MCQs from your uploaded PDFs.">
+    <AppShell title="Quiz Generator" subtitle="Generate AI-powered quizzes from your uploaded PDFs.">
       <div className="max-w-7xl mx-auto px-0 sm:px-2 lg:px-8 py-2 sm:py-4 lg:py-8 w-full animate-in fade-in slide-in-from-bottom-3 duration-250 space-y-6 min-w-0">
         
         {/* Setup Card */}
@@ -605,66 +609,92 @@ export default function QuizPage() {
             </div>
           )}
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_160px_140px_200px] gap-5 items-end w-full">
-            
-            {/* Left: Document Dropdown */}
-            <div className="col-span-1 md:col-span-2 lg:col-span-1">
-              <label className="text-card-label block leading-none" style={{ marginBottom: "12px", fontSize: "11px" }}>Document</label>
-              <div className="relative group/select">
-                {/* Left Icon: Search icon */}
-                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] flex items-center" style={{ left: "16px" }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <select
-                  value={selectedDocId}
-                  disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
-                  onChange={(e) => {
-                    setSelectedDocId(e.target.value);
-                    setDocValidationError(false);
-                    setErrorMsg(null);
-                  }}
-                  className={`w-full border ${
-                    docValidationError 
-                      ? "border-red-500 ring-2 ring-red-500/15" 
-                      : "border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10"
-                  } bg-[var(--surface)] text-[16px] font-medium text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed`}
-                  style={{ height: "48px", borderRadius: "12px", paddingLeft: "44px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
-                >
-                  <option value="">Select a document...</option>
-                  {documents.map((doc) => (
-                    <option key={doc.id} value={doc.id}>
-                      {doc.title}
-                    </option>
-                  ))}
-                </select>
-                {/* Right Arrow Caret */}
-                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </div>
+          {/* Row 1: Document — full width so name is never clipped */}
+          <div className="w-full">
+            <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Document</label>
+            <div className="relative group/select">
+              <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] flex items-center" style={{ left: "16px" }}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </div>
+              <select
+                value={selectedDocId}
+                disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                onChange={(e) => {
+                  setSelectedDocId(e.target.value);
+                  setDocValidationError(false);
+                  setErrorMsg(null);
+                }}
+                className={`w-full border ${
+                  docValidationError
+                    ? "border-red-500 ring-2 ring-red-500/15"
+                    : "border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10"
+                } bg-[var(--surface)] text-[15px] font-semibold text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+                style={{ height: "48px", borderRadius: "12px", paddingLeft: "44px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
+              >
+                <option value="">Select a document...</option>
+                {documents.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.title}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Controls — Quiz Type | Difficulty | Questions | Generate */}
+          <div className="mt-4 flex flex-wrap gap-3 items-end w-full">
+
+            {/* Quiz Type Toggle */}
+            <div className="flex-1" style={{ minWidth: "180px" }}>
+              <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Quiz Type</label>
+              <div className="flex rounded-[12px] border border-[var(--border)] overflow-hidden" style={{ height: "48px" }}>
+                {([
+                  { value: "mcq", label: "MCQ" },
+                  { value: "tf",  label: "T / F" },
+                  { value: "fib", label: "Fill" },
+                ] as const).map((opt, i) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                    onClick={() => setQuizType(opt.value)}
+                    className={`flex-1 text-xs font-bold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      i > 0 ? "border-l border-[var(--border)]" : ""
+                    } ${
+                      quizType === opt.value
+                        ? "bg-[var(--text-1)] text-[var(--text-inv)]"
+                        : "bg-[var(--surface)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Middle Left: Difficulty Dropdown */}
-            <div className="col-span-1 md:col-span-1 lg:col-span-1">
-              <label className="text-card-label block leading-none" style={{ marginBottom: "12px", fontSize: "11px" }}>Difficulty</label>
+            {/* Difficulty */}
+            <div className="flex-shrink-0" style={{ width: "140px" }}>
+              <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Difficulty</label>
               <div className="relative group/select">
                 <select
                   value={difficulty}
                   disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
                   onChange={(e) => setDifficulty(e.target.value)}
-                  className="w-full border border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10 bg-[var(--surface)] text-[16px] font-medium text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ height: "48px", borderRadius: "12px", paddingLeft: "16px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
+                  className="w-full border border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10 bg-[var(--surface)] text-[15px] font-semibold text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ height: "48px", borderRadius: "12px", paddingLeft: "14px", paddingRight: "40px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
                 >
                   <option value="Easy">Easy</option>
                   <option value="Medium">Medium</option>
                   <option value="Hard">Hard</option>
                 </select>
-                {/* Right Arrow Caret */}
-                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
+                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "14px" }}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                   </svg>
@@ -672,9 +702,9 @@ export default function QuizPage() {
               </div>
             </div>
 
-            {/* Middle Right: Questions Input */}
-            <div className="col-span-1 md:col-span-1 lg:col-span-1">
-              <label className="text-card-label block leading-none" style={{ marginBottom: "12px", fontSize: "11px" }}>No. of MCQs</label>
+            {/* Questions */}
+            <div className="flex-shrink-0" style={{ width: "110px" }}>
+              <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Questions</label>
               <input
                 type="number"
                 min={1}
@@ -713,11 +743,10 @@ export default function QuizPage() {
               />
             </div>
 
-
-            {/* Right: Primary CTA */}
-            <div className="col-span-1 md:col-span-1 lg:col-span-1 relative">
+            {/* Generate Button */}
+            <div className="relative flex-shrink-0" style={{ width: "196px" }}>
               {creditsInfo !== null && creditsInfo.remaining === 0 && showTooltip && (
-                <div 
+                <div
                   className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3 py-2 bg-[var(--surface-2)] border border-[var(--border-strong)] text-[var(--text-1)] text-xs font-semibold rounded-lg shadow-lg flex flex-col items-center text-center whitespace-nowrap z-30 animate-in fade-in slide-in-from-bottom-1 duration-150"
                   style={{ pointerEvents: "none" }}
                 >
@@ -729,9 +758,7 @@ export default function QuizPage() {
               <div
                 className="w-full h-full"
                 onMouseEnter={() => {
-                  if (creditsInfo !== null && creditsInfo.remaining === 0) {
-                    setShowTooltip(true);
-                  }
+                  if (creditsInfo !== null && creditsInfo.remaining === 0) setShowTooltip(true);
                 }}
                 onMouseLeave={() => setShowTooltip(false)}
               >
@@ -754,7 +781,15 @@ export default function QuizPage() {
                       <svg className="w-4 h-4 flex-shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l-.813-5.096L3 15l5.187-.904L9 9l.813 5.096L15 15l-5.187.904zM18 10.5l-.5 3-.5-3-3-.5 3-.5.5-3 .5 3 3 .5-3 .5zM19 19.5l-.25 1.5-.25-1.5-1.5-.25 1.5-.25.25-1.5.25 1.5 1.5.25-1.5.25z" />
                       </svg>
-                      <span>{numQuestions > 0 ? `Generate ${numQuestions} MCQs` : "Generate Quiz"}</span>
+                      <span>
+                        {numQuestions > 0
+                          ? quizType === "mcq"
+                            ? `Generate ${numQuestions} MCQs`
+                            : quizType === "tf"
+                            ? `Generate ${numQuestions} T/F`
+                            : `Generate ${numQuestions} Fill Blanks`
+                          : "Generate Quiz"}
+                      </span>
                     </>
                   )}
                 </button>
@@ -764,47 +799,19 @@ export default function QuizPage() {
           </div>
 
           {/* Validation/Errors */}
-          {errorMsg && (
-            isCreditsError ? (
-              /* ── Credits exhausted — special amber banner ── */
-              <div
-                className="mt-5 flex items-start gap-3 px-4 py-3.5 rounded-xl border animate-in fade-in duration-200"
-                style={{
-                  backgroundColor: "rgba(251, 191, 36, 0.08)",
-                  borderColor: "rgba(251, 191, 36, 0.35)",
-                }}
-              >
-                {/* Bolt icon */}
-                <div className="flex-shrink-0 mt-0.5" style={{ color: "#d97706" }}>
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-bold" style={{ color: "#d97706" }}>Daily credit limit reached</span>
-                  <span className="text-xs" style={{ color: "#92400e", opacity: 0.85 }}>
-                    You&apos;ve used all {creditsInfo?.limit ?? 30} of your free credits for today.
-                    Your credits reset at midnight UTC
-                    {creditsInfo?.resetAt ? (
-                      <> (<FormattedDateTime date={creditsInfo.resetAt} type="time" /> your time)</>
-                    ) : "."}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              /* ── Generic error ── */
-              <div className="mt-5 text-xs font-semibold flex items-center gap-2 px-3.5 py-2.5 rounded-lg border-l-2 animate-in fade-in duration-200"
-                   style={{
-                     backgroundColor: "rgba(244, 63, 94, 0.05)",
-                     borderColor: "rgba(244, 63, 94, 0.4)",
-                     color: "var(--red, #f43f5e)",
-                   }}>
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span className="leading-tight">{errorMsg}</span>
-              </div>
-            )
+          {errorMsg && !isCreditsError && (
+            /* ── Generic error ── */
+            <div className="mt-5 text-xs font-semibold flex items-center gap-2 px-3.5 py-2.5 rounded-lg border-l-2 animate-in fade-in duration-200"
+                 style={{
+                   backgroundColor: "rgba(244, 63, 94, 0.05)",
+                   borderColor: "rgba(244, 63, 94, 0.4)",
+                   color: "var(--red, #f43f5e)",
+                 }}>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="leading-tight">{errorMsg}</span>
+            </div>
           )}
         </div>
 
@@ -1053,12 +1060,23 @@ export default function QuizPage() {
                   <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="lg-title">Daily limit reached</h3>
+              <h3 className="lg-title">
+                {(creditsInfo?.remaining ?? 0) === 0 ? "Daily limit reached" : "Not enough credits"}
+              </h3>
               <p className="lg-message">
-                You&apos;ve used all {creditsInfo?.limit ?? 30} daily MCQs. Your limit resets
-                {creditsInfo?.resetAt ? (
-                  <> at <FormattedDateTime date={creditsInfo.resetAt} type="time" /> (your local time).</>  
-                ) : "."}
+                {(creditsInfo?.remaining ?? 0) === 0 ? (
+                  <>
+                    You&apos;ve used all {creditsInfo?.limit ?? 30} daily questions. Your limit resets
+                    {creditsInfo?.resetAt ? (
+                      <> at <FormattedDateTime date={creditsInfo.resetAt} type="time" /> (your local time).</>
+                    ) : "."}
+                  </>
+                ) : (
+                  <>
+                    You only have <strong>{creditsInfo?.remaining}</strong> question credit{creditsInfo?.remaining !== 1 ? "s" : ""} left today.
+                    Please reduce the number of questions to {creditsInfo?.remaining} or less.
+                  </>
+                )}
               </p>
             </div>
             <div className="lg-divider" />
