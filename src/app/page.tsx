@@ -745,11 +745,11 @@ export default function WelcomePage() {
                   <LogoSVG
                     type="icon"
                     animate={false}
-                    className="w-full h-full object-contain dark:invert dark:hue-rotate-180"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <span className="text-base font-bold tracking-tight text-[var(--text-1)]">
-                  QuizGenerator
+                  Quiz<span style={{ color: '#0d9488' }}>Gens</span>
                 </span>
               </div>
               <p 
@@ -779,7 +779,7 @@ export default function WelcomePage() {
                 </a>
                 
                 <a 
-                  href="mailto:madhavjadaun9@gmail.com" 
+                  href="mailto:support@quizgens.tech" 
                   className="flex items-center justify-center h-9 w-9 rounded-lg bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:border-[var(--text-2)] hover:bg-[var(--bg-3)] transition-all duration-200"
                   aria-label="Email"
                 >
@@ -905,7 +905,7 @@ export default function WelcomePage() {
             {/* Bottom Footer: Centered */}
             <div className="flex flex-col items-center justify-center gap-2 text-center text-xs text-[var(--text-4)] font-medium">
               <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center">
-                <span>© 2026 QuizGenerator</span>
+                <span>© 2026 QuizGens</span>
                 <span className="hidden sm:inline">•</span>
                 <span>Built with FastAPI • Gemini • Supabase</span>
               </div>

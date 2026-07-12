@@ -19,13 +19,18 @@ export default function NavbarLogo() {
   return (
     <div 
       className="relative select-none pointer-events-none flex items-center justify-start"
-      style={{ height: '40px', width: 'auto' }}
+      style={{ height: '32px', width: 'auto' }}
     >
-      <LogoSVG
-        type="full"
-        animate={shouldAnimate}
-        className="h-10 w-auto object-contain dark:invert dark:hue-rotate-180"
-      />
+      <div style={{ marginRight: '4px', flexShrink: 0, height: '32px' }}>
+        <LogoSVG
+          type="icon"
+          animate={shouldAnimate}
+          className="h-8 w-auto object-contain"
+        />
+      </div>
+      <span className="text-[15px] font-bold tracking-tight text-[var(--text-1)] leading-none">
+        Quiz<span style={{ color: '#0d9488' }}>Gens</span>
+      </span>
     </div>
   );
 }

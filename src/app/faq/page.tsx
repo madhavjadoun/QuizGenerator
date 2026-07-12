@@ -33,12 +33,12 @@ const FAQ_ITEMS = [
     a: "AI-generated questions are automatically created from document content and may occasionally contain inaccuracies. Please verify important answers from your source material."
   },
   {
-    q: "Is QuizGenerator free?",
+    q: "Is QuizGens free?",
     a: "Yes. The application is available for educational purposes with a daily quiz generation limit."
   },
   {
     q: "Who developed this project?",
-    a: "QuizGenerator was developed as a student project by Madhav Jadoun."
+    a: "QuizGens was developed as a student project by Madhav Jadoun."
   }
 ];
 

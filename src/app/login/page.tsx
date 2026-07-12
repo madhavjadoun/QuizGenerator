@@ -299,12 +299,17 @@ function LoginContent() {
           {/* Header toolbar with Mobile Logo */}
           <div className="flex items-center justify-between w-full">
             {/* Brand Logo */}
-            <div className="flex items-center" style={{ height: '32px' }}>
-              <LogoSVG
-                type="full"
-                animate={false}
-                className="h-8 w-auto object-contain select-none pointer-events-none dark:invert dark:hue-rotate-180"
-              />
+            <div className="flex items-center select-none pointer-events-none" style={{ height: '32px' }}>
+              <div style={{ marginRight: '4px', flexShrink: 0, height: '32px' }}>
+                <LogoSVG
+                  type="icon"
+                  animate={false}
+                  className="h-8 w-auto object-contain"
+                />
+              </div>
+              <span className="text-[15px] font-bold tracking-tight text-[var(--text-1)] leading-none">
+                Quiz<span style={{ color: '#0d9488' }}>Gens</span>
+              </span>
             </div>
           </div>
 
@@ -568,7 +573,7 @@ function LoginContent() {
             <div className="text-center text-xs text-[var(--text-3)] mt-8">
               {mode === "signin" ? (
                 <>
-                  New to QuizGenerator?{" "}
+                  New to QuizGens?{" "}
                   <button
                     type="button"
                     onClick={() => {

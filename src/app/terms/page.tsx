@@ -7,7 +7,7 @@ export default function TermsPage() {
     <AppShell title="Terms of Service" subtitle="Last Updated: July 2026" publicPage={true} noSidebar={true}>
       <div className="max-w-3xl mx-auto glass-card rounded-2xl p-8 space-y-6 text-sm text-[var(--text-2)] leading-relaxed">
         <p className="font-semibold text-base text-[var(--text-1)]">
-          Welcome to QuizGenerator. By using this application, you agree to the following terms.
+          Welcome to QuizGens. By using this application, you agree to the following terms.
         </p>
 
         <div className="space-y-3 pt-2">
@@ -47,7 +47,7 @@ export default function TermsPage() {
         <div className="space-y-3 pt-2">
           <h3 className="text-base font-bold text-[var(--text-1)]">Limitation of Liability</h3>
           <p className="font-medium">
-            QuizGenerator is a student project and is provided &quot;as is&quot; without warranties of any kind.
+            QuizGens is a student project and is provided &quot;as is&quot; without warranties of any kind.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export default function TermsPage() {
           <h3 className="text-base font-bold text-[var(--text-1)]">Contact</h3>
           <p className="font-medium">
             Questions regarding these terms can be sent to:<br />
-            Email: <a href="mailto:madhavjadaun9@gmail.com" className="text-[var(--indigo)] hover:underline">madhavjadaun9@gmail.com</a>
+            Email: <a href="mailto:support@quizgens.tech" className="text-[var(--indigo)] hover:underline">support@quizgens.tech</a>
           </p>
         </div>
       </div>

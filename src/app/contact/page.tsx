@@ -19,8 +19,8 @@ export default function ContactPage() {
           <div className="space-y-1">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-4)]">Email</h4>
             <p className="text-sm font-bold">
-              <a href="mailto:madhavjadaun9@gmail.com" className="text-[var(--indigo)] hover:underline break-all">
-                madhavjadaun9@gmail.com
+              <a href="mailto:support@quizgens.tech" className="text-[var(--indigo)] hover:underline break-all">
+                support@quizgens.tech
               </a>
             </p>
           </div>
@@ -43,7 +43,7 @@ export default function ContactPage() {
         <div className="space-y-2 pt-4 border-t border-[var(--border)]">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-4)]">Project Purpose</h4>
           <p className="text-xs font-semibold text-[var(--text-3)]">
-            QuizGenerator is an AI-powered educational platform that converts PDF documents into interactive practice quizzes using OCR and Google&apos;s Gemini AI.
+            QuizGens is an AI-powered educational platform that converts PDF documents into interactive practice quizzes using OCR and Google&apos;s Gemini AI.
           </p>
         </div>
       </div>

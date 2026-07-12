@@ -7,7 +7,7 @@ export default function PrivacyPage() {
     <AppShell title="Privacy Policy" subtitle="Last Updated: July 2026" publicPage={true} noSidebar={true}>
       <div className="max-w-3xl mx-auto glass-card rounded-2xl p-8 space-y-6 text-sm text-[var(--text-2)] leading-relaxed">
         <p className="font-semibold text-base text-[var(--text-1)]">
-          QuizGenerator respects your privacy. This application is built for educational purposes and only collects the information necessary to provide its core features.
+          QuizGens respects your privacy. This application is built for educational purposes and only collects the information necessary to provide its core features.
         </p>
 
         <div className="space-y-3 pt-2">
@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <h3 className="text-base font-bold text-[var(--text-1)]">Contact</h3>
           <p className="font-medium">
             For any privacy-related questions, please contact:<br />
-            Email: <a href="mailto:madhavjadaun9@gmail.com" className="text-[var(--indigo)] hover:underline">madhavjadaun9@gmail.com</a>
+            Email: <a href="mailto:support@quizgens.tech" className="text-[var(--indigo)] hover:underline">support@quizgens.tech</a>
           </p>
         </div>
 

@@ -444,7 +444,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
                 </svg>
               </div>
               <h3 className="lg-title">Sign out?</h3>
-              <p className="lg-message">Are you sure you want to sign out of QuizGenerator?</p>
+              <p className="lg-message">Are you sure you want to sign out of QuizGens?</p>
             </div>
             <div className="lg-divider" />
             <div className="lg-btn-row">

@@ -117,6 +117,9 @@
   --logo-bg:       #FAFAFA;
   --logo-shadow:   none;
 
+  /* Premium dark card gradient — matches reference image */
+  --card-gradient: radial-gradient(ellipse at 50% 0%, #1c1c20 0%, #111113 45%, #0d0d0f 100%);
+
   color-scheme: dark;
 }
 
@@ -131,6 +134,23 @@
 /* In dark mode, app-bg is transparent so GlobalBackground shows through */
 .dark .app-bg {
   background: transparent;
+}
+
+/* ══════════════════════════════════════
+   DARK MODE CARD GRADIENT
+   Applied only in dark mode — all surface cards get
+   the premium deep-dark gradient from the reference image.
+   ══════════════════════════════════════ */
+.dark .glass-card,
+.dark .glass-nav,
+.dark .glass-chat-input,
+.dark .glass-sidebar {
+  background: var(--card-gradient);
+}
+
+/* Tailwind inline bg-[var(--surface)] cards — apply gradient in dark mode */
+.dark [class*="bg-[var(--surface)]"] {
+  background: var(--card-gradient) !important;
 }
 
 /* ══════════════════════════════════════
@@ -645,6 +665,23 @@ p { color: var(--text-3); line-height: 1.65; }
   fill-opacity: 1;
 }
 
+/* Dark mode: only whiten the dark navy paths, teal checkmark untouched */
+.dark .logo-svg path[fill="#0E1830"],
+.dark .logo-svg path[fill="#0F182F"],
+.dark .logo-svg path[fill="#0F1930"],
+.dark .logo-svg path[fill="#101931"],
+.dark .logo-svg path[fill="#131C32"],
+.dark .logo-svg path[fill="#141E35"],
+.dark .logo-svg path[fill="#191F36"],
+.dark .logo-svg path[fill="#1E253B"],
+.dark .logo-svg path[fill="#1F263C"],
+.dark .logo-svg path[fill="#232A40"],
+.dark .logo-svg path[fill="#232D43"],
+.dark .logo-svg path[fill="#242C42"],
+.dark .logo-svg path[fill="#32384C"] {
+  fill: #ffffff !important;
+}
+
 /* ── Intro Animation Timeline ── */
 .logo-svg.logo-animate {
   animation: logo-fade-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -693,17 +730,13 @@ p { color: var(--text-3); line-height: 1.65; }
   animation: logo-checkmark-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 1.5s forwards;
 }
 
-/* Diagonal Shine Sweep Rect */
+/* Diagonal Shine Sweep Rect — disabled */
 .logo-svg .logo-shine-overlay {
-  pointer-events: none;
-  transform: translate3d(-1998px, 0, 0) rotate(-20deg);
-  transform-origin: center;
-  transform-box: fill-box;
+  display: none;
 }
 
 .logo-svg.logo-animate .logo-shine-overlay {
-  animation: logo-shine-sweep 2.5s ease-in-out 2.2s 1 forwards;
-  opacity: 0.95;
+  display: none;
 }
 
 /* ── Keyframes ── */
