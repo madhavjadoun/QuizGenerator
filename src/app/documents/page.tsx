@@ -136,7 +136,9 @@ export default function DocumentsPage() {
   const [uploadName, setUploadName] = useState("");
   const [progress, setProgress] = useState(0);
   const [userId, setUserId] = useState<string>("");
+  const [isDragging, setIsDragging] = useState(false);
   const [docToDelete, setDocToDelete] = useState<SupabaseDoc | null>(null);
+  const dragCounter = useRef(0);
   const [toast, setToast] = useState<{
     type: "error" | "success" | "warning";
     title: string;
@@ -328,8 +330,7 @@ export default function DocumentsPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const uploadFile = async (file: File) => {
     const { data, error } = await supabase.auth.getSession();
     if (!file) return;
 
@@ -418,9 +419,55 @@ export default function DocumentsPage() {
       showToast(title, "error", subtitle, action);
       setUploading(false);
       setProgress(0);
-    } finally {
-      // Reset input value to allow uploading same file again
-      if (e.target) e.target.value = "";
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
+    }
+    // Reset input value to allow uploading same file again
+    if (e.target) e.target.value = "";
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const isAllowed = /\.(pdf|png|jpe?g|webp)$/i.test(file.name);
+      if (!isAllowed) {
+        showToast("Unsupported File Type", "error", "Please upload a PDF or image (PNG/JPG/WEBP).");
+        return;
+      }
+      await uploadFile(file);
     }
   };
 
@@ -462,9 +509,7 @@ export default function DocumentsPage() {
       await fetchDocs();
       showToast("Document deleted successfully.", "success");
     } catch (err) {
-      if (process.env.NODE_ENV !== "production") {
-        console.error("Delete failed:", err);
-      }
+      console.error("Delete failed:", err);
       const errMsg = err && typeof err === "object" && "message" in err ? String((err as Record<string, unknown>).message) : String(err);
       showToast("Failed to delete document: " + errMsg, "error");
     }
@@ -475,39 +520,61 @@ export default function DocumentsPage() {
   const totalStorage = docs.reduce((s, d) => s + d.file_size, 0);
 
   return (
-    <AppShell
-      title="Documents"
-      subtitle={`${readyCount} indexed · ${formatBytes(totalStorage)} storage used`}
-      action={
-        <>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-            className="hidden"
-          />
-          <button
-            onClick={triggerUploadClick}
-            disabled={uploading}
-            className="grad-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 max-w-full min-w-0"
-          >
-            {uploading ? (
-              <svg className="w-4 h-4 animate-spin flex-shrink-0" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-            )}
-            <span className="truncate">{uploading ? `Indexing ${progress}%` : "Upload File"}</span>
-          </button>
-        </>
-      }
+    <div
+      className="relative min-h-[calc(100vh-100px)] w-full"
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
-      <div className="max-w-7xl mx-auto space-y-6">
+      <AppShell
+        title="Documents"
+        subtitle={`${readyCount} indexed · ${formatBytes(totalStorage)} storage used`}
+        action={
+          <>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+              className="hidden"
+            />
+            <button
+              onClick={triggerUploadClick}
+              disabled={uploading}
+              className="grad-btn flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm hover:shadow hover:-translate-y-0.5 active:translate-y-0 max-w-full min-w-0"
+            >
+              {uploading ? (
+                <svg className="w-4 h-4 animate-spin flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+              )}
+              <span className="truncate">{uploading ? `Indexing ${progress}%` : "Upload File"}</span>
+            </button>
+          </>
+        }
+      >
+        <div className="max-w-7xl mx-auto space-y-6">
+          {isDragging && (
+            <div
+              className="absolute inset-0 bg-[var(--bg)]/90 dark:bg-zinc-950/90 backdrop-blur-md border-[2px] border-dashed border-[var(--indigo)] rounded-2xl z-50 flex flex-col items-center justify-center text-center animate-in fade-in duration-200 pointer-events-none"
+              style={{ margin: "24px" }}
+            >
+              <div className="h-16 w-16 rounded-2xl bg-[var(--bg-2)] border border-[var(--border)] text-[var(--text-1)] flex items-center justify-center shadow-lg mb-4 animate-bounce">
+                <svg className="w-8 h-8 text-[var(--indigo)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-[var(--text-1)] tracking-tight">Drop your document here</h3>
+              <p className="text-xs text-[var(--text-3)] mt-1.5 max-w-[280px]">Upload PDF, PNG, JPG, or WEBP to automatically index it.</p>
+            </div>
+          )}
+
         {/* Ingestion progress banner */}
         {uploading && (
           <div
@@ -759,5 +826,6 @@ export default function DocumentsPage() {
         </div>
       )}
     </AppShell>
-  );
+  </div>
+);
 }

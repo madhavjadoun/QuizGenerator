@@ -82,6 +82,7 @@ DIFFICULTY GUIDE:
 
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
+- Each question MUST be completely unique. Do NOT repeat or generate duplicate/similar questions. Ensure each question covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:
@@ -106,6 +107,7 @@ DIFFICULTY GUIDE:
 
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
+- Each statement/question MUST be completely unique. Do NOT repeat or generate duplicate/similar statements. Ensure each covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:
@@ -131,6 +133,7 @@ DIFFICULTY GUIDE:
 
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
+- Each fill-in-the-blank question MUST be completely unique. Do NOT repeat or generate duplicate/similar sentences. Ensure each covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:

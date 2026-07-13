@@ -295,6 +295,20 @@ def check_document_ownership(document_id: str, user_id: str) -> bool:
     return bool(result.data)
 
 
+def get_document(document_id: str) -> dict[str, Any] | None:
+    """
+    Fetch a single document by its UUID.
+    """
+    client = get_client()
+    result = (
+        client.table("documents")
+        .select("*")
+        .eq("id", document_id)
+        .execute()
+    )
+    return result.data[0] if result.data else None
+
+
 def check_quiz_ownership(quiz_id: str, user_id: str) -> bool:
     """
     Check if a quiz exists and its parent document belongs to the given user.

@@ -82,28 +82,7 @@ export default function QuizPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Load cached credits on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("cached_credits_info");
-      if (cached) {
-        try {
-          setCreditsInfo(JSON.parse(cached));
-        } catch (e) {
-          if (process.env.NODE_ENV !== "production") {
-            console.warn("Failed to parse cached credits:", e);
-          }
-        }
-      }
-    }
-  }, []);
 
-  // Persist creditsInfo to localStorage whenever it updates
-  useEffect(() => {
-    if (creditsInfo) {
-      localStorage.setItem("cached_credits_info", JSON.stringify(creditsInfo));
-    }
-  }, [creditsInfo]);
 
   const apiUrl = (() => {
     let url = process.env.NEXT_PUBLIC_API_URL || 
@@ -131,6 +110,18 @@ export default function QuizPage() {
           setNumQuestions(parseInt(storedCount) || 10);
         }
 
+        // Load cached credits for this specific user
+        const cached = localStorage.getItem(`cached_credits_info_${user.id}`);
+        if (cached) {
+          try {
+            setCreditsInfo(JSON.parse(cached));
+          } catch (e) {
+            if (process.env.NODE_ENV !== "production") {
+              console.warn("Failed to parse cached credits:", e);
+            }
+          }
+        }
+
         // Fetch documents promise
         const fetchDocsPromise = supabase
           .from("documents")
@@ -148,12 +139,14 @@ export default function QuizPage() {
               });
               if (credRes.ok) {
                 const credData = await credRes.json();
-                setCreditsInfo({
+                const freshCredits = {
                   used:      credData.credits_used,
                   limit:     credData.credits_limit,
                   remaining: credData.credits_remaining,
                   resetAt:   credData.reset_at,
-                });
+                };
+                setCreditsInfo(freshCredits);
+                localStorage.setItem(`cached_credits_info_${user.id}`, JSON.stringify(freshCredits));
               }
             }
           } catch (credErr) {
@@ -371,7 +364,9 @@ export default function QuizPage() {
               });
               if (credRes.ok) {
                 const credData = await credRes.json();
-                setCreditsInfo({ used: credData.credits_used, limit: credData.credits_limit, remaining: credData.credits_remaining, resetAt: credData.reset_at });
+                const fresh = { used: credData.credits_used, limit: credData.credits_limit, remaining: credData.credits_remaining, resetAt: credData.reset_at };
+                setCreditsInfo(fresh);
+                localStorage.setItem(`cached_credits_info_${s2.user.id}`, JSON.stringify(fresh));
               }
             }
           } catch {/* silent */}
@@ -397,11 +392,20 @@ export default function QuizPage() {
       // Update credits badge optimistically from API response
       const remainingCredits = data.credits_remaining;
       if (typeof remainingCredits === "number") {
-        setCreditsInfo(prev => prev ? ({
-          ...prev,
-          remaining: remainingCredits,
-          used: prev.limit - remainingCredits,
-        }) : null);
+        setCreditsInfo(prev => {
+          if (!prev) return null;
+          const updated = {
+            ...prev,
+            remaining: remainingCredits,
+            used: prev.limit - remainingCredits,
+          };
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+              localStorage.setItem(`cached_credits_info_${session.user.id}`, JSON.stringify(updated));
+            }
+          });
+          return updated;
+        });
       }
     } catch (err) {
       if (process.env.NODE_ENV !== "production") {

@@ -25,6 +25,7 @@ from services.supabase_client import (
     delete_quiz,
     get_chunks,
     get_client,
+    get_document,
     get_or_create_daily_credits,
     get_quiz_history,
     save_quiz,
@@ -197,10 +198,20 @@ async def generate_quiz_endpoint(
 
         print(f"[quiz] Found {len(chunks)} chunk(s) for document '{document_id}'")
 
-        # ── 2. Select chunks ──────────────────────────────────────────────────────
+        # Check if the document is an image
+        doc_metadata = get_document(document_id)
+        is_image = False
+        if doc_metadata:
+            file_name = doc_metadata.get("file_name", "").lower()
+            is_image = any(file_name.endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".webp"))
+
         is_large = len(chunks) > 1
 
-        if is_large:
+        if is_image:
+            # For images, send all chunks (all text) without sampling
+            selected = chunks
+            print(f"[quiz] Image detected ({doc_metadata.get('file_name') if doc_metadata else ''}) — using all {len(chunks)} chunk(s) as context")
+        elif is_large:
             # Dynamically scale chunk sample size to coverage requirements:
             # e.g., 5 MCQs -> 3-4 chunks, 10 MCQs -> 6-8 chunks, 50 MCQs -> 30-35 chunks.
             calculated_sample_size = int(num_questions * 0.6) + 1

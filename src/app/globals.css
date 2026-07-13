@@ -1068,9 +1068,9 @@ next-dev-indicator,
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.36);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   animation: ios-backdrop-in 200ms ease forwards;
 }
 
@@ -1084,8 +1084,8 @@ next-dev-indicator,
   overflow: hidden;
   animation: ios-alert-enter 300ms cubic-bezier(0.28, 0.84, 0.42, 1) forwards;
 
-  /* Glass surface — you see the background through it */
-  background: rgba(255, 255, 255, 0.82);
+  /* Glass surface — opaque enough to prevent background bleed-through */
+  background: rgba(255, 255, 255, 0.98);
   
   /* Fallback for standard CSS blur support */
   backdrop-filter: blur(30px) saturate(190%) brightness(1.05);
@@ -1105,7 +1105,7 @@ next-dev-indicator,
 
 /* Dark Mode card */
 .dark .lg-card {
-  background: rgba(28, 28, 30, 0.85);
+  background: rgba(24, 24, 28, 0.98);
   
   /* Fallback for standard CSS blur support */
   backdrop-filter: blur(30px) saturate(190%) brightness(0.9);
