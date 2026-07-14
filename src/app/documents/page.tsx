@@ -311,7 +311,10 @@ export default function DocumentsPage() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setDocs(data || []);
+      const filteredDocs = (data || []).filter(
+        (doc: SupabaseDoc) => !(doc.file_name || "").toLowerCase().endsWith(".txt") && !(doc.file_name || "").includes("pasted_text_")
+      );
+      setDocs(filteredDocs);
     } catch (err) {
       if (process.env.NODE_ENV !== "production") {
         console.error("Error fetching documents:", err);

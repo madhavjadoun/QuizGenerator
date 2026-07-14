@@ -59,6 +59,10 @@ export default function QuizPage() {
   const [mcqValidationError, setMcqValidationError] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
 
+  // New input source states
+  const [inputSource, setInputSource] = useState<"pdf" | "image" | "text">("pdf");
+  const [pastedText, setPastedText] = useState<string>("");
+
   // New SaaS Polishing States
   const [currentQuizId, setCurrentQuizId] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("Medium");
@@ -160,7 +164,10 @@ export default function QuizPage() {
         const [docsResult] = await Promise.all([fetchDocsPromise, fetchCreditsPromise]);
 
         if (docsResult.error) throw docsResult.error;
-        setDocuments(docsResult.data || []);
+        const filteredDocs = (docsResult.data || []).filter(
+          (d: DocumentItem) => !(d.file_name || "").toLowerCase().endsWith(".txt") && !(d.file_name || "").includes("pasted_text_")
+        );
+        setDocuments(filteredDocs);
 
         // Check if docId query param exists to auto-select it
         if (typeof window !== "undefined") {
@@ -168,6 +175,16 @@ export default function QuizPage() {
           const docIdParam = params.get("docId");
           if (docIdParam) {
             setSelectedDocId(docIdParam);
+            const matchedDoc = (docsResult.data || []).find((d: DocumentItem) => d.id === docIdParam);
+            if (matchedDoc) {
+              const filename = matchedDoc.file_name || "";
+              if (filename.toLowerCase().endsWith(".txt") || filename.includes("pasted_text_")) {
+                setInputSource("text");
+              } else {
+                const isImg = /\.(png|jpe?g|webp)$/i.test(filename);
+                setInputSource(isImg ? "image" : "pdf");
+              }
+            }
           }
         }
       } catch (err) {
@@ -245,6 +262,16 @@ export default function QuizPage() {
           setQuestions(mappedQuestions);
           setCurrentQuizId(quizIdParam);
           setSelectedDocId(quizData.document_id);
+          const matchedDoc = documents.find(d => d.id === quizData.document_id);
+          if (matchedDoc) {
+            const filename = matchedDoc.file_name || "";
+            if (filename.toLowerCase().endsWith(".txt") || filename.includes("pasted_text_")) {
+              setInputSource("text");
+            } else {
+              const isImg = /\.(png|jpe?g|webp)$/i.test(filename);
+              setInputSource(isImg ? "image" : "pdf");
+            }
+          }
 
           if (quizData.status && quizData.status !== "generated") {
             try {
@@ -290,11 +317,26 @@ export default function QuizPage() {
     setIsCreditsError(false);
 
     let hasError = false;
-    if (!selectedDocId) {
-      setDocValidationError(true);
-      setErrorMsg("Please select a document before generating a quiz.");
-      hasError = true;
+    if (inputSource === "text") {
+      const textCharCount = pastedText.replace(/\r?\n/g, "").length;
+      if (!pastedText || pastedText.trim().length === 0) {
+        setErrorMsg("Please paste some text before generating a quiz.");
+        hasError = true;
+      } else if (textCharCount < 300) {
+        setErrorMsg("Please enter at least 300 characters.");
+        hasError = true;
+      } else if (textCharCount > 6000) {
+        setErrorMsg("Maximum limit is 6000 characters.");
+        hasError = true;
+      }
+    } else {
+      if (!selectedDocId) {
+        setDocValidationError(true);
+        setErrorMsg("Please select a document before generating a quiz.");
+        hasError = true;
+      }
     }
+
     if (numQuestions < 1) {
       setMcqValidationError(true);
       if (!hasError) {
@@ -322,21 +364,29 @@ export default function QuizPage() {
         throw new Error("Unable to retrieve authentication token. Please sign in again.");
       }
 
-      const res = await fetch(`${apiUrl}/quiz/generate`, {
+      const endpoint = inputSource === "text" ? "/quiz/text" : "/quiz/generate";
+      const payload = inputSource === "text" ? {
+        text: pastedText,
+        num_questions: numQuestions,
+        quiz_type: quizType,
+        difficulty: difficulty,
+      } : {
+        document_id: selectedDocId,
+        num_questions: numQuestions,
+        quiz_type: quizType,
+        difficulty: difficulty,
+      };
+
+      const res = await fetch(`${apiUrl}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          document_id: selectedDocId,
-          num_questions: numQuestions,
-          quiz_type: quizType,
-          difficulty: difficulty,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      let data: { detail?: string; questions?: { question: string; options: string[]; correct: string; explanation: string }[]; quiz_id?: string; credits_remaining?: number } | null = null;
+      let data: { detail?: string; questions?: { question: string; options: string[]; correct: string; explanation: string }[]; quiz_id?: string; document_id?: string; credits_remaining?: number } | null = null;
       try {
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
@@ -389,6 +439,22 @@ export default function QuizPage() {
       setQuestions(formattedQuestions);
       setCurrentQuizId(data.quiz_id || "");
 
+      // If generated from pasted text, refresh documents list and select the new doc
+      if (inputSource === "text" && data.document_id && session?.user) {
+        setSelectedDocId(data.document_id);
+        const { data: refreshedDocs } = await supabase
+          .from("documents")
+          .select("id, title, file_name, file_size, created_at")
+          .eq("user_id", session.user.id)
+          .order("created_at", { ascending: false });
+        if (refreshedDocs) {
+          const filteredRefreshed = refreshedDocs.filter(
+            (d: DocumentItem) => !(d.file_name || "").toLowerCase().endsWith(".txt") && !(d.file_name || "").includes("pasted_text_")
+          );
+          setDocuments(filteredRefreshed);
+        }
+      }
+
       // Update credits badge optimistically from API response
       const remainingCredits = data.credits_remaining;
       if (typeof remainingCredits === "number") {
@@ -399,9 +465,9 @@ export default function QuizPage() {
             remaining: remainingCredits,
             used: prev.limit - remainingCredits,
           };
-          supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session?.user) {
-              localStorage.setItem(`cached_credits_info_${session.user.id}`, JSON.stringify(updated));
+          supabase.auth.getSession().then(({ data: { session: s3 } }) => {
+            if (s3?.user) {
+              localStorage.setItem(`cached_credits_info_${s3.user.id}`, JSON.stringify(updated));
             }
           });
           return updated;
@@ -546,6 +612,22 @@ export default function QuizPage() {
   const selectedDoc = documents.find(d => d.id === selectedDocId);
   const selectedDocName = getDocumentDisplayName(selectedDoc);
 
+  const pastedTextCharCount = pastedText.replace(/\r?\n/g, "").length;
+
+  const isImageFile = (filename: string) => {
+    return /\.(png|jpe?g|webp)$/i.test(filename);
+  };
+
+  const filteredDocuments = documents.filter(doc => {
+    const filename = doc.file_name || "";
+    if (inputSource === "pdf") {
+      return filename.toLowerCase().endsWith(".pdf") || !isImageFile(filename);
+    } else if (inputSource === "image") {
+      return isImageFile(filename);
+    }
+    return false;
+  });
+
   return (
     <AppShell title="Quiz Generator" subtitle="Generate AI-powered quizzes from your uploaded PDFs.">
       <div className="max-w-7xl mx-auto px-0 sm:px-2 lg:px-8 py-2 sm:py-4 lg:py-8 w-full animate-in fade-in slide-in-from-bottom-3 duration-250 space-y-6 min-w-0">
@@ -613,44 +695,134 @@ export default function QuizPage() {
             </div>
           )}
           
-          {/* Row 1: Document — full width so name is never clipped */}
-          <div className="w-full">
-            <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Document</label>
-            <div className="relative group/select">
-              <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] flex items-center" style={{ left: "16px" }}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-              </div>
-              <select
-                value={selectedDocId}
-                disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
-                onChange={(e) => {
-                  setSelectedDocId(e.target.value);
-                  setDocValidationError(false);
-                  setErrorMsg(null);
-                }}
-                className={`w-full border ${
-                  docValidationError
-                    ? "border-red-500 ring-2 ring-red-500/15"
-                    : "border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10"
-                } bg-[var(--surface)] text-[15px] font-semibold text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed`}
-                style={{ height: "48px", borderRadius: "12px", paddingLeft: "44px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
-              >
-                <option value="">Select a document...</option>
-                {documents.map((doc) => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.title}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
-              </div>
+          {/* Input Source toggle row */}
+          <div className="w-full mb-5">
+            <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Input Source</label>
+            <div className="flex rounded-[12px] border border-[var(--border)] overflow-hidden" style={{ height: "48px", maxWidth: "450px" }}>
+              {([
+                {
+                  value: "pdf",
+                  label: "PDF",
+                  icon: (
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  )
+                },
+                {
+                  value: "image",
+                  label: "Image",
+                  icon: (
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
+                  )
+                },
+                {
+                  value: "text",
+                  label: "Paste Text",
+                  icon: (
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  )
+                },
+              ] as const).map((opt, i) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  onClick={() => {
+                    setInputSource(opt.value);
+                    setSelectedDocId("");
+                    setDocValidationError(false);
+                    setErrorMsg(null);
+                  }}
+                  className={`flex-1 text-xs font-bold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 ${
+                    i > 0 ? "border-l border-[var(--border)]" : ""
+                  } ${
+                    inputSource === opt.value
+                      ? "bg-[var(--text-1)] text-[var(--text-inv)]"
+                      : "bg-[var(--surface)] text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)]"
+                  }`}
+                >
+                  {opt.icon}
+                  <span>{opt.label}</span>
+                </button>
+              ))}
             </div>
           </div>
+
+          {inputSource === "text" ? (
+            /* Paste Text Input area */
+            <div className="w-full space-y-2 animate-in fade-in duration-200">
+              <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Paste Text</label>
+              <textarea
+                value={pastedText}
+                onChange={(e) => setPastedText(e.target.value)}
+                placeholder="Paste your notes, article, documentation, ChatGPT response, or any text here..."
+                disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                className="w-full min-h-[160px] max-h-[400px] border border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10 bg-[var(--surface)] text-[15px] font-medium text-[var(--text-1)] focus:outline-none transition-all duration-250 p-4"
+                style={{
+                  borderRadius: "14px",
+                  resize: "vertical",
+                  whiteSpace: "pre-wrap",
+                }}
+              />
+              <div className="flex justify-between items-center text-xs font-semibold text-[var(--text-4)] px-1">
+                <div>
+                  {pastedTextCharCount > 0 && pastedTextCharCount < 300 && (
+                    <span className="text-red-500">Please enter at least 300 characters.</span>
+                  )}
+                  {pastedTextCharCount > 6000 && (
+                    <span className="text-red-500">Maximum limit is 6000 characters.</span>
+                  )}
+                </div>
+                <div className={`${pastedTextCharCount < 300 || pastedTextCharCount > 6000 ? "text-red-500" : ""}`}>
+                  {pastedTextCharCount} / 6000 characters
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Row 1: Document — full width so name is never clipped */
+            <div className="w-full animate-in fade-in duration-200">
+              <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Document</label>
+              <div className="relative group/select">
+                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] flex items-center" style={{ left: "16px" }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <select
+                  value={selectedDocId}
+                  disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  onChange={(e) => {
+                    setSelectedDocId(e.target.value);
+                    setDocValidationError(false);
+                    setErrorMsg(null);
+                  }}
+                  className={`w-full border ${
+                    docValidationError
+                      ? "border-red-500 ring-2 ring-red-500/15"
+                      : "border-[var(--border)] focus:border-[var(--indigo)] focus:ring-2 focus:ring-[var(--indigo)]/10"
+                  } bg-[var(--surface)] text-[15px] font-semibold text-[var(--text-1)] focus:outline-none transition-all duration-250 cursor-pointer hover:border-slate-300 dark:hover:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  style={{ height: "48px", borderRadius: "12px", paddingLeft: "44px", paddingRight: "44px", appearance: "none", WebkitAppearance: "none", MozAppearance: "none" }}
+                >
+                  <option value="">Select a document...</option>
+                  {filteredDocuments.map((doc) => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.title}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-4)] group-focus-within/select:rotate-180 transition-transform duration-250" style={{ right: "16px" }}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Row 2: Controls — Quiz Type | Difficulty | Questions | Generate */}
           <div className="mt-4 flex flex-wrap gap-3 items-end w-full">
@@ -768,7 +940,11 @@ export default function QuizPage() {
               >
                 <button
                   onClick={handleGenerateQuiz}
-                  disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  disabled={
+                    generatingQuiz ||
+                    (creditsInfo !== null && creditsInfo.remaining === 0) ||
+                    (inputSource === "text" && (pastedTextCharCount === 0 || pastedTextCharCount < 300 || pastedTextCharCount > 6000))
+                  }
                   className="w-full text-sm font-bold disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 btn-premium-shine text-[var(--text-inv)]"
                   style={{ height: "48px", borderRadius: "14px" }}
                 >
@@ -884,7 +1060,7 @@ export default function QuizPage() {
         )}
 
         {/* 3. Empty State (No selection) */}
-        {!selectedDocId && !generatingQuiz && questions.length === 0 && (
+        {inputSource !== "text" && !selectedDocId && !generatingQuiz && questions.length === 0 && (
           <div className="w-full max-w-[560px] mx-auto border border-dashed border-[var(--border)] bg-[var(--bg-2)]/60 rounded-xl py-5 px-6 flex flex-col items-center justify-center text-center animate-in fade-in duration-250 h-[180px] hover:-translate-y-[2px] hover:shadow-lg transition-all duration-250">
             <span className="text-2xl mb-2">📄</span>
             <h3 className="text-sm font-semibold text-[var(--text-1)] tracking-tight">No document selected</h3>
@@ -998,7 +1174,7 @@ export default function QuizPage() {
 
                         return (
                           <button
-                            key={opt}
+                            key={`${oIdx}-${opt}`}
                             disabled={submitted}
                             onClick={() => handleSelectOption(idx, opt)}
                             className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-all flex items-center justify-between gap-2 min-w-0 ${optStyle} ${

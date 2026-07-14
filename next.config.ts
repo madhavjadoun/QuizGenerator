@@ -43,6 +43,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
+    if (!isProd) return [];
     return [
       {
         source: "/:path*",

@@ -706,6 +706,164 @@ export default function WelcomePage() {
         </div>
       </motion.div>
 
+      {/* Latest Learning Guides Section */}
+      <div className="w-full mt-24 sm:mt-32 max-w-7xl mx-auto px-4 sm:px-12 lg:px-20 space-y-12 relative z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 border-b border-[var(--border)] pb-6">
+          <div className="space-y-2 text-left">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-[var(--indigo-accent)]/10 text-[var(--indigo-accent)]">
+              Learning Portal
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-1)] tracking-tight">Latest Learning Guides</h3>
+            <p className="text-xs text-[var(--text-3)] max-w-md">Master active recall, document scanning, and AI study workflows with our expert guides.</p>
+          </div>
+          <button
+            onClick={() => router.push("/blog")}
+            className="text-xs font-bold text-[var(--indigo-accent)] hover:text-[var(--text-1)] hover:underline flex items-center gap-1.5 cursor-pointer flex-shrink-0 transition-colors"
+          >
+            View All Guides <span>→</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              slug: "best-ai-quiz-generator",
+              title: "Best AI Quiz Generator Guide",
+              desc: "Compare specialized AI quiz makers against general chat models like ChatGPT to see what fits your syllabus.",
+              badge: "Revision",
+              readTime: "5 min read",
+              visual: (
+                <div className="w-full h-full relative flex items-center justify-center bg-gradient-to-tr from-indigo-500/10 to-purple-600/5">
+                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_30%,var(--indigo-accent)_0%,transparent_60%)]" />
+                  {/* Floating abstract network */}
+                  <div className="relative w-20 h-20 flex items-center justify-center">
+                    <motion.div
+                      className="absolute w-12 h-12 rounded-full border border-dashed border-[var(--indigo-accent)]/40"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                    />
+                    <motion.div
+                      className="absolute w-6 h-6 rounded-full border border-dashed border-purple-500/50"
+                      animate={{ rotate: -360 }}
+                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                    />
+                    <div className="w-8 h-8 rounded-xl bg-[var(--surface)] border border-[var(--border)] shadow-xs flex items-center justify-center text-indigo-500 relative z-10 p-1.5">
+                      <svg className="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    {/* Orbiting nodes */}
+                    <div className="absolute top-1 left-1 w-2.5 h-2.5 rounded-full bg-[var(--indigo-accent)] shadow-xs" />
+                    <div className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-purple-500 shadow-xs" />
+                  </div>
+                </div>
+              )
+            },
+            {
+              slug: "generate-quiz-from-pdf",
+              title: "Generate Quiz from PDF Textbook",
+              desc: "A complete step-by-step walkthrough on turning heavy textbooks and slides into targeted revision test sets.",
+              badge: "PDF Ingestion",
+              readTime: "6 min read",
+              visual: (
+                <div className="w-full h-full relative flex items-center justify-center bg-gradient-to-tr from-blue-500/10 to-indigo-600/5">
+                  <div className="relative w-24 h-16 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-2.5 shadow-xs flex flex-col justify-between overflow-hidden">
+                    {/* Mock document lines */}
+                    <div className="space-y-1">
+                      <div className="w-3/4 h-1.5 rounded-sm bg-[var(--bg-3)]" />
+                      <div className="w-full h-1.5 rounded-sm bg-[var(--bg-2)]" />
+                      <div className="w-5/6 h-1.5 rounded-sm bg-[var(--bg-2)]" />
+                    </div>
+                    <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5">
+                      <span className="text-[7px] font-bold text-[var(--indigo-accent)]">PAGE 12</span>
+                      <span className="text-[7px] font-extrabold px-1 rounded bg-red-500/10 text-red-500 scale-90">.PDF</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              slug: "convert-images-into-quizzes-using-ocr",
+              title: "Convert Handwritten Notes via OCR",
+              desc: "Learn how QuizGens extracts handwritings, whiteboard files, and textbook photos with smart preprocessors.",
+              badge: "OCR Scanner",
+              readTime: "7 min read",
+              visual: (
+                <div className="w-full h-full relative flex items-center justify-center bg-gradient-to-tr from-emerald-500/10 to-teal-600/5 overflow-hidden">
+                  {/* Mock handwritten sheet with scanner line */}
+                  <div className="relative w-24 h-16 bg-[var(--surface)] border border-[var(--border)] rounded-lg p-2.5 shadow-xs flex flex-col justify-between overflow-hidden">
+                    <div className="space-y-1">
+                      <div className="w-2/3 h-1.5 rounded-sm bg-emerald-500/20" />
+                      <div className="w-full h-1.5 rounded-sm bg-emerald-500/10" />
+                      <div className="w-3/4 h-1.5 rounded-sm bg-emerald-500/10" />
+                    </div>
+                    <div className="flex items-center justify-between border-t border-[var(--border)] pt-1.5">
+                      <span className="text-[7px] font-bold text-emerald-600">SCANNER</span>
+                      <span className="text-[7px] font-extrabold px-1 rounded bg-emerald-500/10 text-emerald-600 scale-90">OCR</span>
+                    </div>
+                    {/* Sweeping Laser scanner line */}
+                    <motion.div
+                      className="absolute left-0 right-0 h-0.5 bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                      animate={{ y: [-5, 60, -5] }}
+                      transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </div>
+                </div>
+              )
+            }
+          ].map((g, idx) => (
+            <motion.div
+              key={g.slug}
+              variants={{
+                hidden: { opacity: 0, y: 30 },
+                visible: {
+                  opacity: 1,
+                  y: 0,
+                  transition: { type: "spring", damping: 20, stiffness: 120, delay: idx * 0.1 }
+                }
+              }}
+              onClick={() => router.push(`/blog/${g.slug}`)}
+              className="bg-[var(--surface-2)]/40 backdrop-blur-md border border-[var(--border)] rounded-2xl overflow-hidden flex flex-col h-full shadow-xs hover:border-[var(--indigo-accent)]/30 hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.12)] transition-all duration-300 cursor-pointer group"
+            >
+              {/* Visual Card Graphic */}
+              <div className="w-full h-32 relative border-b border-[var(--border)] overflow-hidden">
+                {g.visual}
+              </div>
+
+              {/* Card Body */}
+              <div className="p-5 flex flex-col justify-between flex-1 space-y-4">
+                <div className="space-y-2 text-left">
+                  <div className="flex items-center justify-between text-[9px] font-extrabold text-[var(--text-4)] uppercase tracking-wider">
+                    <span className="px-2 py-0.5 rounded bg-[var(--indigo-accent)]/10 text-[var(--indigo-accent)]">
+                      {g.badge}
+                    </span>
+                    <span>{g.readTime}</span>
+                  </div>
+                  <h4 className="text-xs sm:text-sm font-extrabold text-[var(--text-1)] tracking-tight leading-snug group-hover:text-[var(--indigo-accent)] transition-colors duration-200">
+                    {g.title}
+                  </h4>
+                  <p className="text-[11px] text-[var(--text-3)] leading-relaxed font-semibold">
+                    {g.desc}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded-full bg-[var(--indigo-accent)]/10 text-[8px] font-bold text-[var(--indigo-accent)] flex items-center justify-center">
+                      MJ
+                    </div>
+                    <span className="text-[10px] font-bold text-[var(--text-2)]">Madhav</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-[var(--indigo-accent)] flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
+                    Read Guide <span>→</span>
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
       <footer className="w-full text-[var(--text-1)] mt-24 sm:mt-32">
         <style dangerouslySetInnerHTML={{ __html: `
           .custom-page-footer-grid {

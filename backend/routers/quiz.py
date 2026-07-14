@@ -28,6 +28,8 @@ from services.supabase_client import (
     get_document,
     get_or_create_daily_credits,
     get_quiz_history,
+    save_chunks,
+    save_document,
     save_quiz,
     update_quiz,
 )
@@ -49,6 +51,24 @@ class GenerateQuizRequest(BaseModel):
 
     document_id: str
     """UUID of the document to generate a quiz from."""
+
+    num_questions: int = 10
+    """How many questions to generate (limit 50, defaults to 10)."""
+
+    quiz_type: str = "mcq"
+    """Type of quiz: 'mcq' (default), 'tf' (True/False), or 'fib' (Fill in the Blanks)."""
+
+    difficulty: str = "Medium"
+    """Difficulty level: 'Easy', 'Medium' (default), or 'Hard'."""
+
+class GenerateQuizFromTextRequest(BaseModel):
+    """Request body for POST /quiz/text."""
+    model_config = {
+        "extra": "forbid"
+    }
+
+    text: str
+    """The pasted notes, article, documentation, or other text to generate a quiz from."""
 
     num_questions: int = 10
     """How many questions to generate (limit 50, defaults to 10)."""
@@ -284,6 +304,244 @@ async def generate_quiz_endpoint(
 
 
     # ── 6. Return full quiz payload ───────────────────────────────────────────
+    return {
+        "quiz_id":          quiz_id,
+        "document_id":      document_id,
+        "questions":        questions,
+        "credits_remaining": credits_remaining_after,
+    }
+
+
+# ── POST /quiz/text ───────────────────────────────────────────────────────────
+
+@router.post("/text", status_code=201)
+async def generate_quiz_from_text_endpoint(
+    request: Request,
+    body: GenerateQuizFromTextRequest,
+    user_id: str = Depends(get_current_user_id)
+) -> dict[str, Any]:
+    """
+    Generate a quiz from pasted text directly.
+    
+    Steps:
+      1. Normalize and validate text length (300 to 6000 chars).
+      2. Check rate limits and credits.
+      3. Upload text to Supabase Storage as a .txt file.
+      4. Save document metadata in the documents table.
+      5. Split text into chunks and save chunks.
+      6. Call Gemini to generate questions.
+      7. Save quiz and questions, consume credits, and return.
+    """
+    import re
+    import uuid
+    from routers.documents import _chunk_text, STORAGE_BUCKET
+
+    # ── Rate limiting ──────────────────────────────────────────────────────────
+    ip = request.client.host if request.client else "unknown"
+    api_limiter.check_rate_limit(f"api_ip:{ip}", ip)
+    api_limiter.check_rate_limit(f"api_user:{user_id}", ip)
+    quiz_limiter.check_rate_limit(f"quiz_ip:{ip}", ip)
+    quiz_limiter.check_rate_limit(f"quiz_user:{user_id}", ip)
+
+    async with quiz_semaphore:
+        raw_text = body.text
+        num_questions = body.num_questions
+        quiz_type = body.quiz_type.strip().lower() if body.quiz_type else "mcq"
+        difficulty = body.difficulty.strip() if body.difficulty else "Medium"
+
+        if not raw_text:
+            raise HTTPException(
+                status_code=400,
+                detail="Text content must be a non-empty string."
+            )
+
+        # Normalize text
+        normalized_text = raw_text.strip()
+        normalized_text = normalized_text.replace('\r\n', '\n').replace('\r', '\n')
+        normalized_text = re.sub(r'\n{3,}', '\n\n', normalized_text)
+
+        char_count = len(normalized_text.replace('\n', '').replace('\r', ''))
+        if char_count < 300:
+            raise HTTPException(
+                status_code=400,
+                detail="Please enter at least 300 characters."
+            )
+        if char_count > 6000:
+            raise HTTPException(
+                status_code=400,
+                detail="Maximum limit is 6000 characters."
+            )
+
+        if num_questions < 1 or num_questions > 50:
+            raise HTTPException(
+                status_code=400,
+                detail="Number of questions (num_questions) must be between 1 and 50."
+            )
+
+        if quiz_type not in ("mcq", "tf", "fib"):
+            raise HTTPException(
+                status_code=400,
+                detail="quiz_type must be one of: 'mcq', 'tf', 'fib'."
+            )
+
+        if difficulty not in ("Easy", "Medium", "Hard"):
+            raise HTTPException(
+                status_code=400,
+                detail="difficulty must be one of: 'Easy', 'Medium', 'Hard'."
+            )
+
+        # ── Credit check ──────────────────────────────────────────────────────────
+        try:
+            credit_row = get_or_create_daily_credits(user_id)
+            credits_used  = credit_row["credits_used"]
+            credits_limit = credit_row["credits_limit"]
+            remaining     = credits_limit - credits_used
+            if num_questions > remaining:
+                raise HTTPException(
+                    status_code=402,
+                    detail=(
+                        f"Insufficient credits: generating {num_questions} questions requires {num_questions} credits, "
+                        f"but you only have {remaining} remaining today (limit: {credits_limit}/day). "
+                        f"Your credits reset at midnight UTC."
+                    ),
+                )
+        except HTTPException:
+            raise  # re-raise our own 402
+        except Exception as exc:
+            print(f"[quiz] Failed to check daily credits for user_id='{user_id}': {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to check daily credits.",
+            ) from exc
+
+        print(f"[quiz] Generate request from pasted text — user_id='{user_id}', num_questions={num_questions}, quiz_type={quiz_type}, difficulty={difficulty}")
+
+        # ── 1. Create storage filename and document title ────────────────────────
+        file_uuid = str(uuid.uuid4())
+        file_name = f"pasted_text_{file_uuid}.txt"
+        storage_path = f"{user_id}/{file_name}"
+        storage_content_type = "text/plain; charset=utf-8"
+
+        # Generate a clean title from first 35 chars
+        snippet = normalized_text[:35].replace('\n', ' ').strip()
+        title = f"Pasted Text: {snippet}..." if len(normalized_text) > 35 else f"Pasted Text: {snippet}"
+
+        # ── 2. Upload text to Supabase Storage ────────────────────────────────────
+        file_bytes = normalized_text.encode('utf-8')
+        file_size = len(file_bytes)
+        print(f"[quiz] Uploading text to Storage — bucket='{STORAGE_BUCKET}', path='{storage_path}'")
+
+        try:
+            client = get_client()
+            client.storage.from_(STORAGE_BUCKET).upload(
+                path=storage_path,
+                file=file_bytes,
+                file_options={"content-type": storage_content_type, "upsert": "true"},
+            )
+            file_url = storage_path
+            print(f"[quiz] Text uploaded — storage path: {file_url}")
+        except Exception as exc:
+            print(f"[quiz] Storage upload failed: {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to upload text to storage.",
+            ) from exc
+
+        # ── 3. Save document metadata ─────────────────────────────────────────────
+        print("[quiz] Saving document metadata to database...")
+        try:
+            doc_row = save_document(
+                user_id=user_id,
+                title=title,
+                file_name=file_name,
+                file_size=file_size,
+                file_url=file_url,
+            )
+        except Exception as exc:
+            print(f"[quiz] Failed to save document metadata: {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save document metadata.",
+            ) from exc
+
+        document_id = doc_row["id"]
+
+        # ── 4. Chunk and save text chunks ─────────────────────────────────────────
+        is_large = len(normalized_text) > 3000
+        if is_large:
+            print(f"[quiz] Large text — chunking text into 500-char segments...")
+            raw_chunks = _chunk_text(normalized_text)
+            chunk_dicts = [
+                {"content": chunk, "page_number": 1, "chunk_index": i}
+                for i, chunk in enumerate(raw_chunks)
+            ]
+            print(f"[quiz] Created {len(chunk_dicts)} chunk(s)")
+        else:
+            print("[quiz] Small text — saving as single chunk")
+            chunk_dicts = [{"content": normalized_text, "page_number": 1, "chunk_index": 0}]
+
+        try:
+            save_chunks(document_id=document_id, user_id=user_id, chunks=chunk_dicts)
+        except Exception as exc:
+            print(f"[quiz] Failed to save text chunks: {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save text chunks.",
+            ) from exc
+
+        # ── 5. Select context for Gemini call ─────────────────────────────────────
+        # For large text, randomly sample chunks matching target questions (same as PDF)
+        if is_large:
+            calculated_sample_size = int(num_questions * 0.6) + 1
+            sample_size = min(calculated_sample_size, len(chunk_dicts))
+            selected = random.sample(chunk_dicts, sample_size)
+            selected.sort(key=lambda c: c.get("chunk_index", 0))
+            print(f"[quiz] sampled {sample_size}/{len(chunk_dicts)} chunk(s)")
+        else:
+            selected = chunk_dicts
+
+        combined_text = "\n\n".join(c["content"] for c in selected)
+
+        # ── 6. Generate quiz via Gemini ───────────────────────────────────────────
+        print(f"[quiz] Calling Gemini/Quiz API to generate {num_questions} {quiz_type.upper()} questions ({difficulty})...")
+        try:
+            questions = generate_quiz(combined_text, num_questions=num_questions, quiz_type=quiz_type, difficulty=difficulty)
+        except ValueError as exc:
+            print(f"[quiz] Quiz generation validation failure: {exc}")
+            raise HTTPException(
+                status_code=422,
+                detail="Quiz generation failed. Please try again with clearer content.",
+            ) from exc
+        except RuntimeError as exc:
+            print(f"[quiz] Quiz API unavailable: {exc}")
+            raise HTTPException(
+                status_code=503,
+                detail="Quiz API unavailable. Please try again shortly.",
+            ) from exc
+        except Exception as exc:
+            print(f"[quiz] Unexpected quiz generation error: {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Unexpected error during quiz generation.",
+            ) from exc
+
+        # ── 7. Save quiz and consume credits ──────────────────────────────────────
+        try:
+            quiz_id = save_quiz(document_id=document_id, questions=questions, quiz_type=quiz_type)
+        except Exception as exc:
+            print(f"[quiz] Failed to save quiz: {exc}")
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to save quiz to database.",
+            ) from exc
+
+        try:
+            updated_credits = consume_credits(user_id=user_id, amount=num_questions)
+            credits_remaining_after = updated_credits["credits_limit"] - updated_credits["credits_used"]
+        except Exception as exc:
+            print(f"[quiz] WARNING: Credit consumption failed: {exc}")
+            credits_remaining_after = None
+
     return {
         "quiz_id":          quiz_id,
         "document_id":      document_id,

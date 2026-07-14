@@ -166,7 +166,9 @@ export default function DashboardPage() {
           .order("created_at", { ascending: false });
 
         if (docsError) throw docsError;
-        const documents = dbDocs || [];
+        const documents = (dbDocs || []).filter(
+          (d) => !(d.file_name || "").toLowerCase().endsWith(".txt") && !(d.file_name || "").includes("pasted_text_")
+        );
         setHasDocs(documents.length > 0);
 
         // 2. Fetch user's quizzes and calculate stats
