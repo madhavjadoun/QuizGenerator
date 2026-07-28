@@ -14,10 +14,10 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 /* ── Constants ─────────────────────────────────── */
 
 const ROTATING_WORDS = [
-  "build quizzes.",
-  "practice smarter.",
+  "learn faster.",
   "master concepts.",
-  "learn faster."
+  "generate quizzes.",
+  "practice smarter."
 ];
 
 const letterVariants = {
@@ -338,7 +338,7 @@ export default function WelcomePage() {
                 />{" "}
                 <br className="hidden sm:inline" />
                 <BlurText
-                  text="into an AI quiz to"
+                  text="into smart AI study tools to"
                   delay={25}
                   className="mr-2"
                 />
@@ -384,7 +384,7 @@ export default function WelcomePage() {
               {/* Subheading */}
               <p className="text-[18px] lg:text-[20px] font-normal leading-[1.6] text-[var(--text-2)] mt-6 max-w-[640px]">
                 <BlurText
-                  text="Upload searchable or scanned PDFs, lecture slides, and notes. Our OCR pipeline extracts the text, chunks the content, and generates interactive quizzes (MCQs, True/False, and Fill in the Blanks) in seconds."
+                  text="Upload searchable or scanned PDFs, lecture slides, and notes. Our OCR pipeline extracts the text, analyzes key concepts, and generates interactive quizzes, practice tests, and study materials in seconds."
                   delay={25}
                 />
               </p>
@@ -398,7 +398,7 @@ export default function WelcomePage() {
               </h3>
               <ul className="space-y-3.5">
                 {[
-                  { bold: "Generates accurate quizzes", rest: "from your study materials." },
+                  { bold: "Generates instant study materials & quizzes", rest: "from your documents." },
                   { bold: "Supports PDFs, images & notes", rest: "whiteboard scans, and pasted notes." },
                   { bold: "Multiple formats supported", rest: "MCQs, True/False, and Fill-in-the-Blanks." },
                   { bold: "Fast, private & reliable", rest: "and optimized for active recall study." }
@@ -608,7 +608,7 @@ export default function WelcomePage() {
               How It Works
             </h3>
             <p className="text-xs text-[var(--text-3)] max-w-lg mx-auto">
-              Turn any document into high-yield interactive practice tests in four simple steps
+              Turn any document into high-yield interactive study materials and practice tests in four simple steps
             </p>
           </div>
 
