@@ -58,12 +58,9 @@ def _ocr_pdf(file_bytes: bytes) -> str:
                 img = img.resize(new_size)
 
             try:
-                text = pytesseract.image_to_string(img, lang="eng+hin+urd", config=custom_config)
+                text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
             except Exception:
-                try:
-                    text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
-                except Exception:
-                    text = pytesseract.image_to_string(img, lang="eng")
+                text = pytesseract.image_to_string(img, lang="eng")
             print(f"[pdf_parser] OCR page {i}: extracted {len(text)} chars")
             page_texts.append(text)
         finally:
@@ -246,14 +243,9 @@ def parse_image(file_bytes: bytes) -> dict:
     print("[pdf_parser] parse_image: running pytesseract OCR...")
     custom_config = r'--psm 6'
     try:
-        try:
-            text = pytesseract.image_to_string(img, lang="eng+hin+urd", config=custom_config)
-            from pytesseract import Output
-            data = pytesseract.image_to_data(img, lang="eng+hin+urd", config=custom_config, output_type=Output.DICT)
-        except Exception:
-            text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
-            from pytesseract import Output
-            data = pytesseract.image_to_data(img, lang="eng", config=custom_config, output_type=Output.DICT)
+        text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
+        from pytesseract import Output
+        data = pytesseract.image_to_data(img, lang="eng", config=custom_config, output_type=Output.DICT)
     except Exception as exc:
         raise ValueError(f"OCR failed on image. Detail: {exc}") from exc
     finally:
