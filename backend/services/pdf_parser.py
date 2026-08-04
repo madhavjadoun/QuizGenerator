@@ -47,13 +47,23 @@ def _ocr_pdf(file_bytes: bytes) -> str:
     images = convert_from_bytes(file_bytes, dpi=200)
     print(f"[pdf_parser] OCR fallback: got {len(images)} image(s), running tesseract...")
 
+    custom_config = r'--psm 6'
     page_texts: list[str] = []
     for i, img in enumerate(images, start=1):
         try:
+            MAX_DIM = 1800
+            if max(img.width, img.height) > MAX_DIM:
+                ratio = MAX_DIM / float(max(img.width, img.height))
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size)
+
             try:
-                text = pytesseract.image_to_string(img, lang="eng+hin+urd")
+                text = pytesseract.image_to_string(img, lang="eng+hin+urd", config=custom_config)
             except Exception:
-                text = pytesseract.image_to_string(img, lang="eng")
+                try:
+                    text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
+                except Exception:
+                    text = pytesseract.image_to_string(img, lang="eng")
             print(f"[pdf_parser] OCR page {i}: extracted {len(text)} chars")
             page_texts.append(text)
         finally:
@@ -224,22 +234,26 @@ def parse_image(file_bytes: bytes) -> dict:
     except Exception:
         print("[pdf_parser] parse_image: No EXIF orientation data or transpose skipped.")
 
-    # ── Step 2: Convert to grayscale ──────────────────────────────────────────
-    if img.mode != "L":
-        img = img.convert("L")
-    print("[pdf_parser] parse_image: converted to grayscale.")
+    # ── Step 2.5: Resize image if resolution > 1800px for faster OCR ─────────
+    MAX_DIM = 1800
+    if max(img.width, img.height) > MAX_DIM:
+        ratio = MAX_DIM / float(max(img.width, img.height))
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size)
+        print(f"[pdf_parser] parse_image: resized image to {new_size} for faster OCR.")
 
     # ── Step 3: Run OCR ───────────────────────────────────────────────────────
     print("[pdf_parser] parse_image: running pytesseract OCR...")
+    custom_config = r'--psm 6'
     try:
         try:
-            text = pytesseract.image_to_string(img, lang="eng+hin+urd")
+            text = pytesseract.image_to_string(img, lang="eng+hin+urd", config=custom_config)
             from pytesseract import Output
-            data = pytesseract.image_to_data(img, lang="eng+hin+urd", output_type=Output.DICT)
+            data = pytesseract.image_to_data(img, lang="eng+hin+urd", config=custom_config, output_type=Output.DICT)
         except Exception:
-            text = pytesseract.image_to_string(img, lang="eng")
+            text = pytesseract.image_to_string(img, lang="eng", config=custom_config)
             from pytesseract import Output
-            data = pytesseract.image_to_data(img, lang="eng", output_type=Output.DICT)
+            data = pytesseract.image_to_data(img, lang="eng", config=custom_config, output_type=Output.DICT)
     except Exception as exc:
         raise ValueError(f"OCR failed on image. Detail: {exc}") from exc
     finally:

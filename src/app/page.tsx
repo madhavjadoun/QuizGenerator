@@ -9,6 +9,7 @@ import NavbarLogo from "@/components/layout/NavbarLogo";
 import LogoSVG from "@/components/layout/LogoSVG";
 import Image from "next/image";
 import BlurText from "@/components/ui/BlurText";
+import { useUpload } from "@/context/UploadContext";
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 /* ── Constants ─────────────────────────────────── */
@@ -81,8 +82,9 @@ export default function WelcomePage() {
   const [mounted, setMounted] = useState(false);
   const [uploadAnimData, setUploadAnimData] = useState<Record<string, unknown> | null>(null);
   const [dragging, setDragging] = useState(false);
+  const { startUpload, activeUpload } = useUpload();
   const [dropped, setDropped] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
+  const progress = activeUpload?.progress ?? 0;
   const [toast, setToast] = useState<{
     type: "error" | "success" | "warning";
     title: string;
@@ -180,102 +182,16 @@ export default function WelcomePage() {
 
   /* Upload logic */
   const uploadFileToSupabase = async (file: File) => {
-    setDropped(file.name);
-    setProgress(5);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user ?? null;
 
-    // Dynamic progress simulation
-    let currentProgress = 5;
-    const progressInterval = setInterval(() => {
-      if (currentProgress < 85) {
-        currentProgress += Math.floor(Math.random() * 8) + 3;
-        setProgress(Math.min(currentProgress, 85));
-      }
-    }, 200);
-
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      let session = sessionData?.session;
-      const user = session?.user ?? null;
-
-      if (sessionError || !session || !user) {
-        clearInterval(progressInterval);
-        setDropped(null);
-        setProgress(0);
-        if (process.env.NODE_ENV !== "production") {
-          console.error("[Upload] Auth check failed:", sessionError?.message);
-        }
-        setShowAuthModal(true);
-        return;
-      }
-
-      // If the token is about to expire, force a refresh before uploading
-      if (session.expires_at && Date.now() / 1000 > session.expires_at - 60) {
-        const { data: refreshedSessionData, error: refreshError } = await supabase.auth.refreshSession();
-        if (refreshError && process.env.NODE_ENV !== "production") {
-          console.warn("[Upload] Refresh failed:", refreshError.message);
-        }
-        session = refreshedSessionData.session || session;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("user_id", user.id);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ||
-        (process.env.NODE_ENV === "production"
-          ? "https://quizgenerator-1-846v.onrender.com"
-          : "http://127.0.0.1:8000");
-      const uploadUrl = `${apiUrl}/documents/upload`;
-      const uploadHeaders = {
-        "Authorization": `Bearer ${session.access_token}`,
-      };
-
-      const processResponse = await fetch(uploadUrl, {
-        method: "POST",
-        headers: uploadHeaders,
-        body: formData,
-      });
-
-      if (!processResponse.ok) {
-        const errText = await processResponse.text();
-        let errMsg = errText;
-        try {
-          const errObj = JSON.parse(errText);
-          if (errObj && typeof errObj === "object" && "detail" in errObj) {
-            errMsg = String(errObj.detail);
-          }
-        } catch { }
-        throw new Error(errMsg || `Document upload/processing failed with status: ${processResponse.status}`);
-      }
-
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      // ── Success feedback ──
-      const isImage = /\.(png|jpe?g|webp)$/i.test(file.name);
-      showToast(
-        "Upload Successful",
-        "success",
-        isImage
-          ? "Image indexed successfully. Ready for quiz generation."
-          : "Document indexed successfully. Ready for quiz generation.",
-      );
-
-      setTimeout(() => { router.push("/dashboard"); }, 1500);
-
-    } catch (err) {
-      clearInterval(progressInterval);
-      if (process.env.NODE_ENV !== "production") {
-        console.error("[Upload] Final caught error:", err);
-      }
-      setDropped(null);
-      setProgress(0);
-      const rawMsg = err && typeof err === "object" && "message" in err
-        ? String((err as Record<string, unknown>).message)
-        : String(err);
-      const { title, subtitle, action } = parseUploadError(rawMsg);
-      showToast(title, "error", subtitle, action);
+    if (!user) {
+      setShowAuthModal(true);
+      return;
     }
+
+    setDropped(file.name);
+    await startUpload(file);
   };
 
   const onDrop = (e: React.DragEvent) => {

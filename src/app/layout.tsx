@@ -1,6 +1,7 @@
 import DeferredGoogleAnalytics from "@/components/shared/DeferredGoogleAnalytics";
 import GlobalBackground from "@/components/app/GlobalBackground";
 import LiquidGlassFilter from "@/components/app/LiquidGlassFilter";
+import ClientAppWrapper from "@/components/providers/ClientAppWrapper";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
@@ -122,7 +123,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}>
         <GlobalBackground />
         <LiquidGlassFilter />
-        {children}
+        <ClientAppWrapper>
+          {children}
+        </ClientAppWrapper>
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <DeferredGoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}

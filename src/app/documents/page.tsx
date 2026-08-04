@@ -7,6 +7,7 @@ import AppShell from "@/components/app/AppShell";
 import { Skeleton, DocumentRowSkeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 import FormattedDateTime from "@/components/shared/FormattedDateTime";
+import { useUpload } from "@/context/UploadContext";
 
 
 interface SupabaseDoc {
@@ -132,9 +133,10 @@ function getDocumentDisplayName(doc: SupabaseDoc) {
 export default function DocumentsPage() {
   const [docs, setDocs] = useState<SupabaseDoc[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const { startUpload, activeUpload } = useUpload();
+  const uploading = activeUpload?.status === "uploading" || activeUpload?.status === "processing";
+  const progress = activeUpload?.progress ?? 0;
   const [uploadName, setUploadName] = useState("");
-  const [progress, setProgress] = useState(0);
   const [userId, setUserId] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const [docToDelete, setDocToDelete] = useState<SupabaseDoc | null>(null);
@@ -326,103 +328,25 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     fetchDocs();
+
+    const handleDocumentUploaded = () => {
+      fetchDocs();
+    };
+    window.addEventListener("document_uploaded", handleDocumentUploaded);
+    return () => {
+      window.removeEventListener("document_uploaded", handleDocumentUploaded);
+    };
   }, []);
 
   const triggerUploadClick = () => {
-    if (uploading) return;
+    if (activeUpload?.status === "uploading" || activeUpload?.status === "processing") return;
     fileInputRef.current?.click();
   };
 
   const uploadFile = async (file: File) => {
-    const { data, error } = await supabase.auth.getSession();
     if (!file) return;
-
     setUploadName(file.name);
-    setUploading(true);
-    setProgress(5);
-
-    // Simulate upload progress
-    let currentProgress = 5;
-    const progressInterval = setInterval(() => {
-      if (currentProgress < 85) {
-        currentProgress += Math.floor(Math.random() * 8) + 3;
-        setProgress(Math.min(currentProgress, 85));
-      }
-    }, 200);
-
-    try {
-      const token = data.session?.access_token;
-      const authenticatedUserId = data.session?.user?.id || userId;
-
-      if (error || !token || !authenticatedUserId) {
-        clearInterval(progressInterval);
-        setUploading(false);
-        setProgress(0);
-        showToast("Session Expired", "error", "Please sign in again.");
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 2500);
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("user_id", authenticatedUserId);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
-        (process.env.NODE_ENV === "production" 
-          ? "https://quizgenerator-1-846v.onrender.com" 
-          : "http://127.0.0.1:8000");
-      const uploadUrl = `${apiUrl}/documents/upload`;
-      const uploadHeaders = {
-        "Authorization": `Bearer ${token}`,
-      };
-
-      const processResponse = await fetch(uploadUrl, {
-        method: "POST",
-        headers: uploadHeaders,
-        body: formData
-      });
-
-      if (!processResponse.ok) {
-        const errText = await processResponse.text();
-        let errMsg = errText;
-        try {
-          const errObj = JSON.parse(errText);
-          if (errObj && typeof errObj === "object" && "detail" in errObj) {
-            errMsg = String(errObj.detail);
-          }
-        } catch {}
-        throw new Error(errMsg || `Document upload/processing failed with status: ${processResponse.status}`);
-      }
-
-      clearInterval(progressInterval);
-      setProgress(100);
-      await fetchDocs();
-
-      // ── Success feedback ──
-      const isImage = /\.(png|jpe?g|webp)$/i.test(file.name);
-      showToast(
-        "Upload Successful",
-        "success",
-        isImage
-          ? "Image indexed successfully. Ready for quiz generation."
-          : "Document indexed successfully. Ready for quiz generation.",
-      );
-
-      setTimeout(() => { setUploading(false); setProgress(0); }, 1000);
-
-    } catch (err) {
-      clearInterval(progressInterval);
-      if (process.env.NODE_ENV !== "production") {
-        console.error("Upload failed:", err);
-      }
-      const rawMsg = err && typeof err === "object" && "message" in err ? String((err as Record<string, unknown>).message) : String(err);
-      const { title, subtitle, action } = parseUploadError(rawMsg);
-      showToast(title, "error", subtitle, action);
-      setUploading(false);
-      setProgress(0);
-    }
+    await startUpload(file);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
