@@ -135,7 +135,7 @@ export default function DashboardPage() {
           if (token) {
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 
               (process.env.NODE_ENV === "production" 
-                ? "https://quizgenerator-production.up.railway.app" 
+                ? "https://quizgenerator-1-846v.onrender.com" 
                 : "http://127.0.0.1:8000");
             if (apiUrl.includes("localhost")) apiUrl = apiUrl.replace("localhost", "127.0.0.1");
             const credRes = await fetch(`${apiUrl}/credits/status`, {
@@ -185,7 +185,7 @@ export default function DashboardPage() {
           if (token) {
             let apiUrl = process.env.NEXT_PUBLIC_API_URL || 
               (process.env.NODE_ENV === "production" 
-                ? "https://quizgenerator-production.up.railway.app" 
+                ? "https://quizgenerator-1-846v.onrender.com" 
                 : "http://127.0.0.1:8000");
             if (apiUrl.includes("localhost")) apiUrl = apiUrl.replace("localhost", "127.0.0.1");
             const res = await fetch(`${apiUrl}/quiz/user-history`, {

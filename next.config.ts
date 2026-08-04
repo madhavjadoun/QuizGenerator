@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const isProd = process.env.NODE_ENV === "production";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const backendApiUrl = process.env.BACKEND_API_URL || (isProd ? "https://quizgenerator-production.up.railway.app" : "http://127.0.0.1:8000");
+const backendApiUrl = process.env.BACKEND_API_URL || (isProd ? "https://quizgenerator-1-846v.onrender.com" : "http://127.0.0.1:8000");
 const publicApiUrl = process.env.NEXT_PUBLIC_API_URL || "";
 
 const connectSources = [
@@ -19,8 +19,8 @@ const connectSources = [
   "https://*.doubleclick.net",
   "https://cloudflareinsights.com",
   "https://*.cloudflareinsights.com",
-  "https://*.railway.app",
-  "https://quizgenerator-production.up.railway.app",
+  "https://*.onrender.com",
+  "https://quizgenerator-1-846v.onrender.com",
 ];
 
 if (supabaseUrl) {

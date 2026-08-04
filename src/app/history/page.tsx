@@ -282,7 +282,7 @@ export default function HistoryPage() {
         // 2. Fetch quizzes associated with user's documents via secure backend API
         let apiUrl = process.env.NEXT_PUBLIC_API_URL ||
           (process.env.NODE_ENV === "production"
-            ? "https://quizgenerator-production.up.railway.app"
+            ? "https://quizgenerator-1-846v.onrender.com"
             : "http://127.0.0.1:8000");
         if (apiUrl.includes("localhost")) {
           apiUrl = apiUrl.replace("localhost", "127.0.0.1");
@@ -443,7 +443,7 @@ export default function HistoryPage() {
 
       let apiUrl = process.env.NEXT_PUBLIC_API_URL ||
         (process.env.NODE_ENV === "production"
-          ? "https://quizgenerator-production.up.railway.app"
+          ? "https://quizgenerator-1-846v.onrender.com"
           : "http://127.0.0.1:8000");
       if (apiUrl.includes("localhost")) {
         apiUrl = apiUrl.replace("localhost", "127.0.0.1");
@@ -496,7 +496,7 @@ export default function HistoryPage() {
 
       let apiUrl = process.env.NEXT_PUBLIC_API_URL ||
         (process.env.NODE_ENV === "production"
-          ? "https://quizgenerator-production.up.railway.app"
+          ? "https://quizgenerator-1-846v.onrender.com"
           : "http://127.0.0.1:8000");
       if (apiUrl.includes("localhost")) {
         apiUrl = apiUrl.replace("localhost", "127.0.0.1");

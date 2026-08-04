@@ -50,7 +50,10 @@ def _ocr_pdf(file_bytes: bytes) -> str:
     page_texts: list[str] = []
     for i, img in enumerate(images, start=1):
         try:
-            text = pytesseract.image_to_string(img, lang="eng")
+            try:
+                text = pytesseract.image_to_string(img, lang="eng+hin+urd")
+            except Exception:
+                text = pytesseract.image_to_string(img, lang="eng")
             print(f"[pdf_parser] OCR page {i}: extracted {len(text)} chars")
             page_texts.append(text)
         finally:
@@ -229,9 +232,14 @@ def parse_image(file_bytes: bytes) -> dict:
     # ── Step 3: Run OCR ───────────────────────────────────────────────────────
     print("[pdf_parser] parse_image: running pytesseract OCR...")
     try:
-        text = pytesseract.image_to_string(img, lang="eng")
-        from pytesseract import Output
-        data = pytesseract.image_to_data(img, lang="eng", output_type=Output.DICT)
+        try:
+            text = pytesseract.image_to_string(img, lang="eng+hin+urd")
+            from pytesseract import Output
+            data = pytesseract.image_to_data(img, lang="eng+hin+urd", output_type=Output.DICT)
+        except Exception:
+            text = pytesseract.image_to_string(img, lang="eng")
+            from pytesseract import Output
+            data = pytesseract.image_to_data(img, lang="eng", output_type=Output.DICT)
     except Exception as exc:
         raise ValueError(f"OCR failed on image. Detail: {exc}") from exc
     finally:
@@ -253,14 +261,13 @@ def parse_image(file_bytes: bytes) -> dict:
     avg_conf = sum(confidences) / len(confidences) if confidences else 0.0
     print(f"[pdf_parser] parse_image: average OCR confidence = {avg_conf:.2f}")
 
-    if avg_conf < 50:
+    if avg_conf < 15:
         raise ValueError(
             "Low OCR confidence. Please ensure the image contains clear, legible printed text."
         )
 
-    # 2. Count alphanumeric characters (require >= 20)
-    import re as _re
-    alphanumeric_text = _re.sub(r"[^a-zA-Z0-9]", "", text_stripped)
+    # 2. Count alphanumeric characters (require >= 20, supports Unicode/Hindi/Urdu)
+    alphanumeric_text = "".join([c for c in text_stripped if c.isalnum()])
     alphanumeric_count = len(alphanumeric_text)
     print(f"[pdf_parser] parse_image: alphanumeric character count = {alphanumeric_count}")
 
@@ -272,7 +279,7 @@ def parse_image(file_bytes: bytes) -> dict:
 
     # 3. Meaningful words count (require >= 5 tokens containing alphanumeric chars)
     words = [w.strip() for w in text_stripped.split() if w.strip()]
-    meaningful_words = [w for w in words if _re.search(r"[a-zA-Z0-9]", w)]
+    meaningful_words = [w for w in words if any(c.isalnum() for c in w)]
     meaningful_words_count = len(meaningful_words)
     print(f"[pdf_parser] parse_image: meaningful words count = {meaningful_words_count}")
 

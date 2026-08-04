@@ -91,7 +91,7 @@ export default function QuizPage() {
   const apiUrl = (() => {
     let url = process.env.NEXT_PUBLIC_API_URL || 
       (process.env.NODE_ENV === "production" 
-        ? "https://quizgenerator-production.up.railway.app" 
+        ? "https://quizgenerator-1-846v.onrender.com" 
         : "http://127.0.0.1:8000");
     if (url.includes("localhost")) {
       url = url.replace("localhost", "127.0.0.1");

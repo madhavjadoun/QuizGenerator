@@ -371,7 +371,7 @@ export default function DocumentsPage() {
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
         (process.env.NODE_ENV === "production" 
-          ? "https://quizgenerator-production.up.railway.app" 
+          ? "https://quizgenerator-1-846v.onrender.com" 
           : "http://127.0.0.1:8000");
       const uploadUrl = `${apiUrl}/documents/upload`;
       const uploadHeaders = {
