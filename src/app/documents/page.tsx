@@ -163,17 +163,16 @@ export default function DocumentsPage() {
    */
   const parseUploadError = (raw: string): { title: string; subtitle: string; action?: string } => {
     const msg = raw.toLowerCase();
-    if (msg.includes("no readable text") || msg.includes("ocr failed") || msg.includes("no text")) {
+    if (msg.includes("scanned") || msg.includes("image-based")) {
       return {
-        title: "Couldn't read the image",
-        subtitle: "No readable text was detected. Try uploading a clearer image with visible printed text.",
-        action: "Choose Another Image",
+        title: "Scanned or Image PDF Detected",
+        subtitle: "This PDF appears to be scanned or image-based. Please upload a text-based PDF or paste the text manually.",
       };
     }
-    if (msg.includes("unsupported file type") || msg.includes("unsupported image type") || msg.includes("not a valid pdf")) {
+    if (msg.includes("unsupported file type") || msg.includes("not a valid pdf")) {
       return {
         title: "Unsupported File",
-        subtitle: "Only PDF, PNG, JPG, JPEG and WEBP are supported.",
+        subtitle: "Only text-based PDF files are supported.",
       };
     }
     if (msg.includes("too large") || msg.includes("413") || msg.includes("payload too large")) {
@@ -389,9 +388,9 @@ export default function DocumentsPage() {
 
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      const isAllowed = /\.(pdf|png|jpe?g|webp)$/i.test(file.name);
+      const isAllowed = /\.pdf$/i.test(file.name);
       if (!isAllowed) {
-        showToast("Unsupported File Type", "error", "Please upload a PDF or image (PNG/JPG/WEBP).");
+        showToast("Unsupported File Type", "error", "Please upload a text-based PDF.");
         return;
       }
       await uploadFile(file);
@@ -463,7 +462,7 @@ export default function DocumentsPage() {
               type="file"
               ref={fileInputRef}
               onChange={handleFileChange}
-              accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+              accept="application/pdf,.pdf"
               className="hidden"
             />
             <button
@@ -498,7 +497,7 @@ export default function DocumentsPage() {
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-[var(--text-1)] tracking-tight">Drop your document here</h3>
-              <p className="text-xs text-[var(--text-3)] mt-1.5 max-w-[280px]">Upload PDF, PNG, JPG, or WEBP to automatically index it.</p>
+              <p className="text-xs text-[var(--text-3)] mt-1.5 max-w-[280px]">Upload a text-based PDF to automatically index it.</p>
             </div>
           )}
 
@@ -710,16 +709,16 @@ export default function DocumentsPage() {
             </span>
 
             {/* Content */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <p
-                className="text-sm font-semibold leading-tight"
+                className="text-sm font-semibold leading-tight truncate"
                 style={{ color: "var(--text-1)" }}
               >
                 {toast.title}
               </p>
               {toast.subtitle && (
                 <p
-                  className="text-xs mt-1 leading-snug"
+                  className="text-xs mt-1 leading-snug break-words [word-break:break-word]"
                   style={{ color: "var(--text-2)" }}
                 >
                   {toast.subtitle}

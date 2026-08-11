@@ -108,17 +108,16 @@ export default function WelcomePage() {
    */
   const parseUploadError = (raw: string): { title: string; subtitle: string; action?: string } => {
     const msg = raw.toLowerCase();
-    if (msg.includes("no readable text") || msg.includes("ocr failed") || msg.includes("no text")) {
+    if (msg.includes("scanned") || msg.includes("image-based")) {
       return {
-        title: "Couldn't read the image",
-        subtitle: "No readable text was detected. Try uploading a clearer image with visible printed text.",
-        action: "Choose Another Image",
+        title: "Scanned or Image PDF Detected",
+        subtitle: "This PDF appears to be scanned or image-based. Please upload a text-based PDF or paste the text manually.",
       };
     }
-    if (msg.includes("unsupported file type") || msg.includes("unsupported image type") || msg.includes("not a valid pdf")) {
+    if (msg.includes("unsupported file type") || msg.includes("not a valid pdf")) {
       return {
         title: "Unsupported File",
-        subtitle: "Only PDF, PNG, JPG, JPEG and WEBP are supported.",
+        subtitle: "Only text-based PDF files are supported.",
       };
     }
     if (msg.includes("too large") || msg.includes("413") || msg.includes("payload too large")) {
@@ -300,7 +299,7 @@ export default function WelcomePage() {
               {/* Subheading */}
               <p className="text-[18px] lg:text-[20px] font-normal leading-[1.6] text-[var(--text-2)] mt-6 max-w-[640px]">
                 <BlurText
-                  text="Upload searchable or scanned PDFs, lecture slides, and notes. Our OCR pipeline extracts the text, analyzes key concepts, and generates interactive quizzes, practice tests, and study materials in seconds."
+                  text="Upload text-based PDFs, lecture slides, and notes. Our text extraction engine analyzes key concepts and generates interactive quizzes, practice tests, and study materials in seconds."
                   delay={25}
                 />
               </p>
@@ -315,7 +314,7 @@ export default function WelcomePage() {
               <ul className="space-y-3.5">
                 {[
                   { bold: "Generates instant study materials & quizzes", rest: "from your documents." },
-                  { bold: "Supports PDFs, images & notes", rest: "whiteboard scans, and pasted notes." },
+                  { bold: "Supports text-based PDFs & notes", rest: "and pasted text notes." },
                   { bold: "Multiple formats supported", rest: "MCQs, True/False, and Fill-in-the-Blanks." },
                   { bold: "Fast, private & reliable", rest: "and optimized for active recall study." }
                 ].map((item, idx) => (
@@ -349,23 +348,14 @@ export default function WelcomePage() {
             <div className="w-full max-w-[540px] mx-auto lg:ml-auto lg:mr-0 bg-[var(--surface-2)] border border-[var(--border)] rounded-xl overflow-hidden shadow-sm">
 
               {/* Card Header */}
-              <div
-                className="px-4 sm:px-6 py-4 flex items-start sm:items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--bg-2)] min-w-0"
-              >
+              <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-2)] min-w-0">
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-semibold text-[var(--text-1)]">
                     AI Quiz Generator
                   </h3>
                   <p className="text-[10px] text-[var(--text-3)] mt-0.5 break-words">
-                    Select PDFs, study images, or notes to generate practice tests.
+                    Select text-based PDFs or notes to generate practice tests.
                   </p>
-                </div>
-
-                {/* Decorative dots */}
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-1.5 w-1.5 rounded-full bg-[var(--border-strong)]" />
-                  ))}
                 </div>
               </div>
 
@@ -445,7 +435,7 @@ export default function WelcomePage() {
                         or click to browse local files
                       </p>
                       <span className="text-[8px] font-mono bg-[var(--bg-3)] px-2 py-0.5 rounded mt-3 text-[var(--text-3)]">
-                        PDF, Image or Study Notes (Max 25MB)
+                        Text-based PDF (Max 25MB)
                       </span>
                     </div>
                   )}
@@ -453,7 +443,7 @@ export default function WelcomePage() {
                   <input
                     ref={fileRef}
                     type="file"
-                    accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+                    accept="application/pdf,.pdf"
                     className="hidden"
                     onChange={onFileChange}
                   />
@@ -479,8 +469,7 @@ export default function WelcomePage() {
                   </h4>
                   <ul className="space-y-3">
                     {[
-                      "Use clear PDFs, images, or study notes for best results.",
-                      "OCR handles handwriting and scanned pages perfectly.",
+                      "Use clear text-based PDFs for best results.",
                       "Larger files may take slightly longer to process.",
                       "Generates MCQs, True/False, and Blank formats.",
                       "Download your quiz and start practicing instantly."
@@ -541,7 +530,7 @@ export default function WelcomePage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-[var(--text-1)]">Upload Learning Material</h4>
-                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">Supports PDFs, study images, or text notes</p>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">Supports text-based PDFs or text notes</p>
               </div>
             </motion.div>
 
@@ -566,7 +555,7 @@ export default function WelcomePage() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-[var(--text-1)]">AI Processing</h4>
-                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">OCR + smart text extraction</p>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">Smart text extraction</p>
               </div>
             </motion.div>
 
@@ -646,7 +635,7 @@ export default function WelcomePage() {
                   <li>Smart Generation</li>
                   <li>Adaptive Learning</li>
                   <li>Analytics</li>
-                  <li>Intelligent OCR</li>
+                  <li>PDF Text Extraction</li>
                   <li>Instant Explanations</li>
                 </ul>
               </div>
@@ -708,7 +697,7 @@ export default function WelcomePage() {
         <div
           role="alert"
           aria-live="assertive"
-          className="fixed bottom-5 right-5 z-50 flex items-start gap-3 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden sm:max-w-sm"
+          className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm z-50 flex items-start gap-3 rounded-xl animate-in fade-in slide-in-from-bottom-4 duration-300 overflow-hidden"
           style={{
             background: "var(--surface-2)",
             border: "1px solid var(--border-strong)",
@@ -730,7 +719,7 @@ export default function WelcomePage() {
           />
 
           {/* Pad content away from stripe */}
-          <div className="flex items-start gap-3 pl-5 pr-4 py-4 w-full">
+          <div className="flex items-start gap-3 pl-5 pr-4 py-4 w-full min-w-0">
             {/* Icon */}
             <span className="mt-0.5 flex-shrink-0">
               {toast.type === "success" && (
@@ -751,16 +740,16 @@ export default function WelcomePage() {
             </span>
 
             {/* Content */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 overflow-hidden">
               <p
-                className="text-sm font-semibold leading-tight"
+                className="text-sm font-semibold leading-tight truncate"
                 style={{ color: "var(--text-1)" }}
               >
                 {toast.title}
               </p>
               {toast.subtitle && (
                 <p
-                  className="text-xs mt-1 leading-snug"
+                  className="text-xs mt-1 leading-snug break-words [word-break:break-word]"
                   style={{ color: "var(--text-2)" }}
                 >
                   {toast.subtitle}

@@ -129,22 +129,16 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         status: "success",
       });
 
-      const isImage = /\.(png|jpe?g|webp)$/i.test(file.name);
       showToast(
-        "Upload Complete 🎉",
+        "Document Uploaded",
         "success",
-        `"${file.name}" was ${isImage ? "scanned" : "indexed"} successfully and is ready for quiz generation.`
+        `"${file.name}" is ready.`
       );
 
       // Dispatch global custom event so pages like /documents can auto-refresh their doc list
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("document_uploaded", { detail: { fileName: file.name } }));
       }
-
-      // Auto-dismiss upload widget after 7 seconds
-      setTimeout(() => {
-        setActiveUpload((prev) => (prev?.status === "success" ? null : prev));
-      }, 7000);
 
       return true;
     } catch (err: unknown) {
@@ -158,7 +152,15 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         errorTitle: "Upload Failed",
         errorMessage: rawMsg,
       });
-      showToast("Upload Failed", "error", rawMsg);
+
+      const lowerMsg = rawMsg.toLowerCase();
+      if (lowerMsg.includes("scanned") || lowerMsg.includes("image-based")) {
+        showToast("Scanned PDF Detected", "error", "Please upload a text-based PDF or paste text manually.");
+      } else if (lowerMsg.includes("unsupported") || lowerMsg.includes("valid pdf")) {
+        showToast("Unsupported File", "error", "Please upload a text-based PDF.");
+      } else {
+        showToast("Upload Error", "error", rawMsg || "Could not upload file. Please try again.");
+      }
       return false;
     }
   };

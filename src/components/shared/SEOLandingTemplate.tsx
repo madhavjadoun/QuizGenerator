@@ -168,7 +168,7 @@ export default function SEOLandingTemplate({ data }: SEOLandingTemplateProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="border border-[var(--indigo-accent)] bg-[var(--indigo-accent)]/5 rounded-xl p-3 flex flex-col gap-2">
                       <span className="text-xs font-bold text-[var(--indigo-accent)]">1. Document Type</span>
-                      <span className="text-[11px] font-semibold text-[var(--text-2)]">📄 PDF / Image / Text</span>
+                      <span className="text-[11px] font-semibold text-[var(--text-2)]">📄 PDF / Text</span>
                     </div>
                     <div className="border border-[var(--border)] bg-[var(--bg-2)] rounded-xl p-3 flex flex-col gap-2">
                       <span className="text-xs font-bold text-[var(--text-2)]">2. Quiz Type</span>
@@ -218,8 +218,8 @@ export default function SEOLandingTemplate({ data }: SEOLandingTemplateProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </span>
-                <h3 className="text-sm font-bold text-[var(--text-1)]">Images (OCR Scanner)</h3>
-                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">Snap a photo of the whiteboard, upload screenshot slides, or legacy handwritten study notes to analyze their text content.</p>
+                <h3 className="text-sm font-bold text-[var(--text-1)]">Structured Materials</h3>
+                <p className="text-[11px] text-[var(--text-3)] leading-relaxed">Automatically convert textbook sections, course tables, and study guides into interactive quizzes.</p>
               </div>
               <div className="bg-[var(--surface-2)] border border-[var(--border)] rounded-xl p-6 text-left space-y-4">
                 <span className="block h-8 w-8 text-purple-500">

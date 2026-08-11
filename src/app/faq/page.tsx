@@ -6,7 +6,7 @@ import { useState } from "react";
 const FAQ_ITEMS = [
   {
     q: "What file types and study inputs are supported?",
-    a: "You can upload PDF documents, scanned textbook images, whiteboard screenshots (PNG, JPG, JPEG), or directly paste your copy-pasted text notes."
+    a: "You can upload text-based PDF documents or directly paste your copy-pasted text notes."
   },
   {
     q: "Which quiz formats can I create?",
@@ -17,8 +17,8 @@ const FAQ_ITEMS = [
     a: "You can customize your desired number of questions in your settings page or directly in the chat generation window."
   },
   {
-    q: "Are scanned documents and screenshots supported?",
-    a: "Yes. Advanced OCR scanner models extract text from scanned worksheets, photos of notes, and presentation slides."
+    q: "Are scanned documents or images supported?",
+    a: "No. QuizGens supports text-based PDF documents and pasted text. Scanned/image-only PDFs and image files are not supported."
   },
   {
     q: "Which AI model is used?",

@@ -30,7 +30,7 @@ export default function PublicPageFooter() {
               <li>Smart Generation</li>
               <li>Adaptive Learning</li>
               <li>Analytics</li>
-              <li>Intelligent OCR</li>
+              <li>PDF Text Extraction</li>
               <li>Instant Explanations</li>
             </ul>
           </div>

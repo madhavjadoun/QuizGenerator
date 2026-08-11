@@ -43,7 +43,7 @@ export default function ContactPage() {
         <div className="space-y-2 pt-4 border-t border-[var(--border)]">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text-4)]">Project Purpose</h4>
           <p className="text-xs font-semibold text-[var(--text-3)]">
-            QuizGens is an AI-powered educational platform that converts PDF documents into interactive practice quizzes using OCR and Google&apos;s Gemini AI.
+            QuizGens is an AI-powered educational platform that converts PDF documents into interactive practice quizzes using Google&apos;s Gemini AI.
           </p>
         </div>
       </div>
