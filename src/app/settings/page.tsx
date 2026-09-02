@@ -6,113 +6,8 @@ import AppShell from "@/components/app/AppShell";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabase";
 import Button from "@/components/ui/Button";
+import { Toggle, SettingSection, SettingRow, DangerRow } from "./_components/SettingPrimitives";
 
-// ─── Toggle Component ─────────────────────────────────────────────────────────
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <button
-      onClick={onChange}
-      role="switch"
-      aria-checked={checked}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer flex-shrink-0 ${
-        checked ? "bg-[var(--text-1)]" : "bg-[var(--border-strong)]"
-      }`}
-    >
-      <span
-        className={`inline-block h-4.5 w-4.5 transform rounded-full bg-[var(--surface)] shadow-md transition-transform duration-200 ${
-          checked ? "translate-x-6" : "translate-x-1"
-        }`}
-        style={{ width: "18px", height: "18px" }}
-      />
-    </button>
-  );
-}
-
-// ─── Section Card ─────────────────────────────────────────────────────────────
-function SettingSection({
-  icon,
-  title,
-  description,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl overflow-hidden">
-      {/* Section Header */}
-      <div className="px-4 sm:px-6 py-4 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--bg-2)]/20 min-w-0">
-        <div className="w-8 h-8 rounded-lg bg-[var(--bg-2)] flex items-center justify-center text-[var(--text-2)] flex-shrink-0">
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className="text-base font-semibold text-[var(--text-1)] tracking-tight">{title}</p>
-          {description && <p className="text-xs font-normal text-[var(--text-3)] mt-0.5 break-words leading-relaxed">{description}</p>}
-        </div>
-      </div>
-      {/* Section Content */}
-      <div className="divide-y divide-[var(--border)]">{children}</div>
-    </div>
-  );
-}
-
-// ─── Setting Row ──────────────────────────────────────────────────────────────
-function SettingRow({
-  label,
-  description,
-  children,
-}: {
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[var(--text-1)] tracking-tight">{label}</p>
-        {description && (
-          <p className="text-[12px] font-normal text-[var(--text-3)] mt-0.5 leading-relaxed break-words">{description}</p>
-        )}
-      </div>
-      <div className="flex-shrink-0 w-full sm:w-auto">{children}</div>
-    </div>
-  );
-}
-
-// ─── Danger Row ───────────────────────────────────────────────────────────────
-function DangerRow({
-  label,
-  description,
-  buttonLabel,
-  buttonStyle = "mild",
-  onClick,
-}: {
-  label: string;
-  description: string;
-  buttonLabel: string;
-  buttonStyle?: "mild" | "severe";
-  onClick: () => void;
-}) {
-  return (
-    <div className="px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[var(--text-1)] tracking-tight">{label}</p>
-        <p className="text-[12px] font-normal text-[var(--text-3)] mt-0.5 leading-relaxed break-words">{description}</p>
-      </div>
-      <Button
-        variant={buttonStyle === "severe" ? "destructive" : "secondary"}
-        onClick={onClick}
-        className={`flex-shrink-0 w-full sm:w-auto h-9 text-xs ${
-          buttonStyle !== "severe" ? "text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:border-red-500/25" : ""
-        }`}
-      >
-        {buttonLabel}
-      </Button>
-    </div>
-  );
-}
 export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -263,7 +158,6 @@ export default function SettingsPage() {
     return (
       <AppShell title="Settings" subtitle="Configure your experience.">
         <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-pulse">
-          {/* Account info card skeleton */}
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[18px] p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               <Skeleton className="w-11 h-11 rounded-full flex-shrink-0" />
@@ -274,34 +168,12 @@ export default function SettingsPage() {
             </div>
             <Skeleton className="h-8 w-24 rounded-xl flex-shrink-0" />
           </div>
-
-          {/* Section 1 skeleton */}
           <div className="glass-card rounded-[20px] p-6 space-y-5">
             <div className="flex items-start gap-4">
               <Skeleton className="h-5 w-5 rounded-md flex-shrink-0" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4.5 w-1/5 rounded-lg" />
                 <Skeleton className="h-3 w-1/3 rounded-lg" />
-              </div>
-            </div>
-            <div className="border-t border-[var(--border)] pt-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <div className="space-y-1.5 flex-1">
-                  <Skeleton className="h-4 w-1/4 rounded-lg" />
-                  <Skeleton className="h-3 w-1/2 rounded-lg" />
-                </div>
-                <Skeleton className="h-8 w-24 rounded-lg" />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2 skeleton */}
-          <div className="glass-card rounded-[20px] p-6 space-y-5">
-            <div className="flex items-start gap-4">
-              <Skeleton className="h-5 w-5 rounded-md flex-shrink-0" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4.5 w-1/6 rounded-lg" />
-                <Skeleton className="h-3 w-1/4 rounded-lg" />
               </div>
             </div>
           </div>
@@ -344,10 +216,7 @@ export default function SettingsPage() {
           title="Appearance"
           description="Customise how the interface looks."
         >
-          <SettingRow
-            label="Theme"
-            description="Toggle between light and dark interface modes."
-          >
+          <SettingRow label="Theme" description="Toggle between light and dark interface modes.">
             <button
               onClick={handleToggleTheme}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] hover:bg-[var(--bg-2)] text-xs font-bold text-[var(--text-2)] transition-all cursor-pointer"
@@ -367,10 +236,7 @@ export default function SettingsPage() {
           title="Quiz Preferences"
           description="Control quiz generation and flow defaults."
         >
-          <SettingRow
-            label="Default Question Count"
-            description="Number of questions pre-filled when opening the quiz generator."
-          >
+          <SettingRow label="Default Question Count" description="Number of questions pre-filled when opening the quiz generator.">
             <select
               value={defaultMcqCount}
               onChange={e => handleSaveMcqCount(parseInt(e.target.value))}
@@ -382,10 +248,7 @@ export default function SettingsPage() {
             </select>
           </SettingRow>
 
-          <SettingRow
-            label="Shuffle Option Order"
-            description="Randomise the order of answer choices for each question."
-          >
+          <SettingRow label="Shuffle Option Order" description="Randomise the order of answer choices for each question.">
             <Toggle
               checked={shuffleQuestions}
               onChange={() => {
@@ -397,10 +260,7 @@ export default function SettingsPage() {
             />
           </SettingRow>
 
-          <SettingRow
-            label="Auto-Show Explanations"
-            description="Automatically reveal explanations after answering incorrectly."
-          >
+          <SettingRow label="Auto-Show Explanations" description="Automatically reveal explanations after answering incorrectly.">
             <Toggle
               checked={autoShowExplanation}
               onChange={() => {
@@ -419,15 +279,8 @@ export default function SettingsPage() {
           title="Storage & Cache"
           description="Manage locally stored preferences and cached data."
         >
-          <SettingRow
-            label="Reset Local Preferences"
-            description="Restore all settings above to their factory defaults. No data is deleted from the server."
-          >
-            <Button
-              variant="secondary"
-              onClick={handleClearCache}
-              className="h-9 text-xs"
-            >
+          <SettingRow label="Reset Local Preferences" description="Restore all settings above to their factory defaults. No data is deleted from the server.">
+            <Button variant="secondary" onClick={handleClearCache} className="h-9 text-xs">
               Reset Defaults
             </Button>
           </SettingRow>
@@ -480,20 +333,10 @@ export default function SettingsPage() {
             </div>
             <div className="lg-divider" />
             <div className="lg-btn-row">
-              <button className="lg-btn lg-btn-secondary" onClick={() => setShowHistoryModal(false)} disabled={historyLoading}>
-                Cancel
-              </button>
+              <button className="lg-btn lg-btn-secondary" onClick={() => setShowHistoryModal(false)} disabled={historyLoading}>Cancel</button>
               <div className="lg-btn-separator" />
               <button className="lg-btn lg-btn-destructive" onClick={triggerDeleteHistory} disabled={historyLoading}>
-                {historyLoading ? (
-                  <>
-                    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Deleting…
-                  </>
-                ) : "Clear History"}
+                {historyLoading ? "Deleting…" : "Clear History"}
               </button>
             </div>
           </div>
@@ -515,20 +358,10 @@ export default function SettingsPage() {
             </div>
             <div className="lg-divider" />
             <div className="lg-btn-row">
-              <button className="lg-btn lg-btn-secondary" onClick={() => setShowAccountModal(false)} disabled={accountLoading}>
-                Cancel
-              </button>
+              <button className="lg-btn lg-btn-secondary" onClick={() => setShowAccountModal(false)} disabled={accountLoading}>Cancel</button>
               <div className="lg-btn-separator" />
               <button className="lg-btn lg-btn-destructive" onClick={triggerDeleteAccountData} disabled={accountLoading}>
-                {accountLoading ? (
-                  <>
-                    <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Purging…
-                  </>
-                ) : "Purge Data"}
+                {accountLoading ? "Purging…" : "Purge Data"}
               </button>
             </div>
           </div>

@@ -603,7 +603,7 @@ export default function QuizPage() {
       }))
     };
     
-    import("@/utils/pdfGenerator").then((mod) => {
+    import("@/services/pdfGenerator").then((mod) => {
       mod.downloadQuizReport(reportData);
     });
   };
