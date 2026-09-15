@@ -646,54 +646,35 @@ export default function QuizPage() {
           >
             <h3 className="text-card-label text-[var(--text-1)] flex-shrink-0">Configure Quiz</h3>
             {creditsInfo !== null && (
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <span className="text-xs font-medium text-[var(--text-4)] flex-shrink-0">Daily Credits</span>
-                <span
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full min-w-0 tabular-nums"
-                  style={{
-                    background: creditsInfo.remaining === 0
-                      ? "rgba(244,63,94,0.1)"
-                      : creditsInfo.remaining <= 10
-                      ? "rgba(251,191,36,0.12)"
-                      : "rgba(99,102,241,0.1)",
-                    color: creditsInfo.remaining === 0
-                      ? "#f43f5e"
-                      : creditsInfo.remaining <= 10
-                      ? "#d97706"
-                      : "var(--indigo)",
-                    border: `1px solid ${creditsInfo.remaining === 0 ? "rgba(244,63,94,0.25)" : creditsInfo.remaining <= 10 ? "rgba(251,191,36,0.3)" : "rgba(99,102,241,0.2)"}`,
-                  }}
-                >
-                  {/* Bolt icon */}
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                  </svg>
-                  {creditsInfo.remaining} / {creditsInfo.limit} left
-                </span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[11px] font-medium text-[var(--text-4)] flex-shrink-0">Credits</span>
+                <div className="flex items-center gap-1 min-w-0">
+                  <span
+                    className="text-[11px] font-bold tabular-nums"
+                    style={{
+                      color: creditsInfo.remaining === 0
+                        ? "#f43f5e"
+                        : creditsInfo.remaining <= 10
+                        ? "#d97706"
+                        : "var(--text-2)",
+                    }}
+                  >
+                    {creditsInfo.remaining}
+                  </span>
+                  <span className="text-[11px] text-[var(--text-4)] font-medium">/ {creditsInfo.limit}</span>
+                </div>
               </div>
             )}
           </div>
 
           {creditsInfo !== null && (creditsInfo.remaining === 0 || (numQuestions > 0 && numQuestions > creditsInfo.remaining)) && (
-            <div className="flex justify-center animate-in fade-in duration-200" style={{ marginBottom: "16px" }}>
-              <div 
-                className="flex items-start sm:items-center gap-2 px-3 sm:px-4 py-2 rounded-xl border text-xs font-bold shadow-sm max-w-full"
-                style={{
-                  backgroundColor: "rgba(251, 191, 36, 0.06)",
-                  borderColor: "rgba(251, 191, 36, 0.25)",
-                  color: "#d97706"
-                }}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <span className="break-words text-center sm:text-left">
-                  {creditsInfo.remaining === 0 
-                    ? "Only 0 credits left today. Please come back tomorrow." 
-                    : `Only ${creditsInfo.remaining} credit${creditsInfo.remaining !== 1 ? "s" : ""} left today.`
-                  }
-                </span>
-              </div>
+            <div className="animate-in fade-in duration-200" style={{ marginBottom: "16px" }}>
+              <p className="text-[11px] font-semibold" style={{ color: creditsInfo.remaining === 0 ? "#f43f5e" : "#d97706" }}>
+                {creditsInfo.remaining === 0
+                  ? "No credits left today — resets at midnight UTC."
+                  : `You have ${creditsInfo.remaining} credit${creditsInfo.remaining !== 1 ? "s" : ""} left. Lower the question count to continue.`
+                }
+              </p>
             </div>
           )}
           
