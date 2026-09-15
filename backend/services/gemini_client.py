@@ -267,9 +267,11 @@ def _query_and_validate(prompt: str) -> list[dict[str, Any]]:
                         "generationConfig": {
                             "responseMimeType": "application/json",
                             "temperature": 0.7,
+                            # ponytail: disable thinking — quiz JSON gen needs no reasoning; thinking adds ~10-20s latency
+                            "thinkingConfig": {"thinkingBudget": 0},
                         },
                     },
-                    timeout=60,
+                    timeout=30,
                 )
 
                 # Transient server-side or rate-limit errors → retry with backoff
