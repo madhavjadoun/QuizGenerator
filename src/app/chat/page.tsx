@@ -254,7 +254,7 @@ export default function QuizPage() {
           const dbQuestions = (quizData.quiz_questions || []).sort((a: DBQuestion, b: DBQuestion) => a.order_index - b.order_index);
           const mappedQuestions = dbQuestions.map((q: DBQuestion) => ({
             question: q.question,
-            options: [q.option_a, q.option_b, q.option_c, q.option_d],
+            options: [q.option_a, q.option_b, q.option_c, q.option_d].filter(o => o && o.trim() !== ""),
             correctAnswer: q.correct_option === "A" ? q.option_a : q.correct_option === "B" ? q.option_b : q.correct_option === "C" ? q.option_c : q.option_d,
             explanation: q.explanation
           }));
