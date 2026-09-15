@@ -250,7 +250,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
         </div>
         {/* Version */}
         <div className="text-[11px] font-medium text-[var(--text-4)] text-center mt-1">
-          Version 1.0.0
+          Version 1.1.0
         </div>
       </footer>
     </div>

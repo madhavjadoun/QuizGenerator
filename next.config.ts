@@ -46,6 +46,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  //REVERSE PROXYYY
   async rewrites() {
     return [
       {
