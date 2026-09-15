@@ -863,45 +863,46 @@ export default function QuizPage() {
             </div>
 
             {/* Questions */}
-            <div className="flex-shrink-0" style={{ width: "110px" }}>
+            <div className="flex-shrink-0" style={{ width: "148px" }}>
               <label className="text-card-label block leading-none" style={{ marginBottom: "10px", fontSize: "11px" }}>Questions</label>
-              <input
-                type="number"
-                min={1}
-                disabled={generatingQuiz || (creditsInfo !== null && creditsInfo.remaining === 0)}
-                value={numQuestions === 0 ? "" : numQuestions}
-                onChange={(e) => {
-                  setMcqValidationError(false);
-                  setErrorMsg(null);
-                  setIsCreditsError(false);
-                  const val = e.target.value;
-                  if (val === "") {
-                    setNumQuestions(0);
-                  } else {
-                    const parsed = parseInt(val) || 0;
-                    if (parsed > 50) {
-                      setNumQuestions(50);
-                    } else {
-                      setNumQuestions(parsed);
-                    }
-                  }
-                }}
-                onBlur={() => {
-                  setNumQuestions(prev => {
-                    if (prev <= 0) return 0;
-                    return Math.min(50, prev);
-                  });
-                }}
-                className={`w-full border ${
+              <div
+                className={`flex items-center border ${
                   mcqValidationError
                     ? "border-red-500"
                     : creditsInfo && numQuestions > creditsInfo.remaining && numQuestions > 0
-                    ? "border-amber-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/10"
-                    : "border-[var(--border)] focus:border-[var(--text-1)] focus:ring-2 focus:ring-[var(--text-1)]/5"
-                } bg-[var(--surface)] px-4 text-base font-semibold text-[var(--text-1)] tabular-nums focus:outline-none transition-all duration-250 hover:border-[var(--border-strong)] disabled:opacity-50 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                    ? "border-amber-400"
+                    : "border-[var(--border)] hover:border-[var(--border-strong)]"
+                } bg-[var(--surface)] transition-all duration-200 overflow-hidden`}
                 style={{ height: "48px", borderRadius: "14px" }}
-              />
+              >
+                <button
+                  type="button"
+                  onClick={() => { setMcqValidationError(false); setErrorMsg(null); setIsCreditsError(false); setNumQuestions(n => Math.max(1, n - 1)); }}
+                  disabled={generatingQuiz || numQuestions <= 1 || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  className="flex items-center justify-center flex-shrink-0 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  style={{ width: "40px", height: "48px" }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                  </svg>
+                </button>
+                <span className="flex-1 text-center text-base font-bold text-[var(--text-1)] tabular-nums select-none">
+                  {numQuestions}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { setMcqValidationError(false); setErrorMsg(null); setIsCreditsError(false); setNumQuestions(n => Math.min(50, n + 1)); }}
+                  disabled={generatingQuiz || numQuestions >= 50 || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  className="flex items-center justify-center flex-shrink-0 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  style={{ width: "40px", height: "48px" }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
             </div>
+
 
             {/* Generate Button */}
             <div className="relative flex-shrink-0" style={{ width: "196px" }}>
