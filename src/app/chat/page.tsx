@@ -82,11 +82,20 @@ export default function QuizPage() {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Dynamic max: cap at available credits (min 1, max 50)
+  const maxQuestions = creditsInfo ? Math.min(50, Math.max(1, creditsInfo.remaining)) : 50;
+
   const showToast = (message: string, type: "error" | "success" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  // Auto-clamp numQuestions when credits load or change
+  useEffect(() => {
+    if (creditsInfo && numQuestions > creditsInfo.remaining) {
+      setNumQuestions(Math.max(1, creditsInfo.remaining));
+    }
+  }, [creditsInfo]);
 
 
   const apiUrl = (() => {
@@ -869,8 +878,6 @@ export default function QuizPage() {
                 className={`flex items-center border ${
                   mcqValidationError
                     ? "border-red-500"
-                    : creditsInfo && numQuestions > creditsInfo.remaining && numQuestions > 0
-                    ? "border-amber-400"
                     : "border-[var(--border)] hover:border-[var(--border-strong)]"
                 } bg-[var(--surface)] transition-all duration-200 overflow-hidden`}
                 style={{ height: "48px", borderRadius: "14px" }}
@@ -878,7 +885,7 @@ export default function QuizPage() {
                 <button
                   type="button"
                   onClick={() => { setMcqValidationError(false); setErrorMsg(null); setIsCreditsError(false); setNumQuestions(n => Math.max(1, n - 1)); }}
-                  disabled={generatingQuiz || numQuestions <= 1 || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  disabled={generatingQuiz || numQuestions <= 1}
                   className="flex items-center justify-center flex-shrink-0 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   style={{ width: "40px", height: "48px" }}
                 >
@@ -891,8 +898,8 @@ export default function QuizPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => { setMcqValidationError(false); setErrorMsg(null); setIsCreditsError(false); setNumQuestions(n => Math.min(50, n + 1)); }}
-                  disabled={generatingQuiz || numQuestions >= 50 || (creditsInfo !== null && creditsInfo.remaining === 0)}
+                  onClick={() => { setMcqValidationError(false); setErrorMsg(null); setIsCreditsError(false); setNumQuestions(n => Math.min(maxQuestions, n + 1)); }}
+                  disabled={generatingQuiz || numQuestions >= maxQuestions}
                   className="flex items-center justify-center flex-shrink-0 text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--bg-2)] transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                   style={{ width: "40px", height: "48px" }}
                 >
