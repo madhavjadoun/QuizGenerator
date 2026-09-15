@@ -80,9 +80,15 @@ DIFFICULTY GUIDE:
 - Medium: moderate comprehension, some inference required
 - Hard: deep analysis, tricky distractors, nuanced distinctions required
 
+STRICT UNIQUENESS RULES (most important):
+- Before generating, mentally list EVERY distinct concept, fact, term, and idea in the text.
+- Assign exactly ONE question to each concept. Never assign two questions to the same concept.
+- TWO QUESTIONS ARE DUPLICATES if they test the same underlying fact or idea — even if the wording, language, or phrasing is completely different. Reworded duplicates are still duplicates.
+- Example of a forbidden duplicate pair: "What is photosynthesis?" and "Define the process plants use to make food from sunlight." — same concept, banned.
+- If the text does not contain enough distinct concepts for {num_questions} unique questions, generate fewer questions rather than reusing concepts.
+
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
-- Each question MUST be completely unique. Do NOT repeat or generate duplicate/similar questions. Ensure each question covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:
@@ -105,9 +111,15 @@ DIFFICULTY GUIDE:
 - Medium: requires some comprehension and inference
 - Hard: subtle statements, common misconceptions, tricky wording
 
+STRICT UNIQUENESS RULES (most important):
+- Before generating, mentally list EVERY distinct concept, fact, term, and idea in the text.
+- Assign exactly ONE statement to each concept. Never assign two statements to the same concept.
+- TWO STATEMENTS ARE DUPLICATES if they test the same underlying fact — even if the wording or language is completely different. Reworded duplicates are still duplicates.
+- Example of a forbidden duplicate pair: "The Earth orbits the Sun." and "The Sun is at the center of Earth's orbit." — same concept, banned.
+- If the text does not contain enough distinct concepts, generate fewer questions rather than reusing concepts.
+
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
-- Each statement/question MUST be completely unique. Do NOT repeat or generate duplicate/similar statements. Ensure each covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:
@@ -131,9 +143,14 @@ DIFFICULTY GUIDE:
 - Medium: fill in a concept that requires understanding the context
 - Hard: fill in nuanced or technical terms, multiple possible blanks in sentence
 
+STRICT UNIQUENESS RULES (most important):
+- Before generating, mentally list EVERY distinct concept, fact, term, and idea in the text.
+- Assign exactly ONE blank-question to each concept. Never assign two questions to the same concept.
+- TWO QUESTIONS ARE DUPLICATES if the blank tests the same underlying concept — even if phrased differently. Reworded duplicates are still duplicates.
+- If the text does not contain enough distinct concepts, generate fewer questions rather than reusing concepts.
+
 STRICT OUTPUT RULES:
 - You MUST generate EXACTLY {num_questions} questions. This is mandatory. Do not stop early.
-- Each fill-in-the-blank question MUST be completely unique. Do NOT repeat or generate duplicate/similar sentences. Ensure each covers a different concept, fact, or portion of the document.
 - Return ONLY a valid JSON array. No markdown, no explanation, no preamble.
 - The array must contain exactly {num_questions} objects.
 - Each object must have these exact keys:
