@@ -193,9 +193,6 @@ export default function DocumentsPage() {
   const fetchDocs = async () => {
     try {
       setLoading(true);
-      // Artificial delay of 1 second for loader visualization
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
       // Get current user — required for user-scoped query
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;

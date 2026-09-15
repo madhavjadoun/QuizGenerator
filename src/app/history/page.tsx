@@ -135,7 +135,7 @@ export default function HistoryPage() {
     fetchHistory();
   }, [router]);
 
-  const parseAttempt = (status: string, fallbackTitle: string): QuizAttempt => {
+  const parseAttempt = useCallback((status: string, fallbackTitle: string): QuizAttempt => {
     if (status && status !== "generated") {
       try {
         const attempt = JSON.parse(status);
@@ -165,14 +165,14 @@ export default function HistoryPage() {
       title: fallbackTitle,
       user_answers: {}
     };
-  };
+  }, []);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     if (!seconds || seconds <= 0) return "--:--";
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return m > 0 ? `${m}m ${s}s` : `${s}s`;
-  };
+  }, []);
 
   const handleDownload = (quiz: DBQuiz, withAnswers: boolean) => {
     const docName = docMap[quiz.document_id] || "Document";
