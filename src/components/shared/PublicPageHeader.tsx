@@ -71,20 +71,24 @@ export default function PublicPageHeader() {
             )}
           </button>
 
-          <button
-            onClick={() => router.push("/login")}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[var(--border)] transition-all duration-[250ms] cursor-pointer hover:bg-[var(--bg-2)] hover:text-[var(--text-1)] hover:-translate-y-0.5 active:translate-y-0 shadow-xs whitespace-nowrap hidden xs:block"
-          >
-            Sign in
-          </button>
+          <div className="relative group/signin hidden xs:block">
+            <button
+              onClick={() => router.push("/login")}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[var(--border)] transition-all duration-[250ms] cursor-pointer hover:bg-[var(--bg-2)] hover:text-[var(--text-1)] group-hover/signin:-translate-y-0.5 active:translate-y-0 shadow-xs whitespace-nowrap"
+            >
+              Sign in
+            </button>
+          </div>
 
-          <button
-            onClick={() => router.push("/login")}
-            className="grad-btn px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-[250ms] hover:-translate-y-0.5 flex items-center gap-1 group shadow-xs active:translate-y-0 whitespace-nowrap"
-          >
-            Get started
-            <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-          </button>
+          <div className="relative group/getstarted">
+            <button
+              onClick={() => router.push("/login")}
+              className="grad-btn px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-[250ms] group-hover/getstarted:-translate-y-0.5 flex items-center gap-1 group shadow-xs active:translate-y-0 whitespace-nowrap"
+            >
+              Get started
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </button>
+          </div>
 
           {/* Mobile menu trigger */}
           <button

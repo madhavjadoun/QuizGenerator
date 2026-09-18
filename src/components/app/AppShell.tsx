@@ -391,7 +391,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-lg transition-all hover:bg-black/5 dark:hover:bg-white/5 hover:scale-[1.05] active:scale-95 cursor-pointer"
+              className="p-2.5 rounded-lg transition-all hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 cursor-pointer"
               style={{ color: "var(--text-2)" }}
               aria-label="Toggle theme"
             >
@@ -413,7 +413,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
                 src={userAvatar}
                 alt={userName}
                 onClick={() => setShowLogoutModal(true)}
-                className="h-9 w-9 rounded-xl object-cover cursor-pointer flex-shrink-0 hover:opacity-85 hover:scale-[1.05] active:scale-95 transition-all shadow-sm"
+                className="h-9 w-9 rounded-xl object-cover cursor-pointer flex-shrink-0 hover:opacity-85 active:scale-95 transition-all shadow-sm"
                 referrerPolicy="no-referrer"
                 title="Log out"
                 onError={(e) => {
@@ -428,7 +428,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
             {user && (!userAvatar || true) && (
               <div
                 onClick={() => setShowLogoutModal(true)}
-                className="h-9 w-9 rounded-xl flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 hover:opacity-85 hover:scale-[1.05] active:scale-95 transition-all shadow-sm border border-transparent dark:border-[var(--border)]"
+                className="h-9 w-9 rounded-xl flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 hover:opacity-85 active:scale-95 transition-all shadow-sm border border-transparent dark:border-[var(--border)]"
                 style={{
                   background: theme === "dark"
                     ? "linear-gradient(135deg, #18181b, #27272a)"
