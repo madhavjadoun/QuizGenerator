@@ -1407,3 +1407,23 @@ next-dev-indicator,
   left: 18px;
 }
 
+/* ── Hover Jitter Fix ────────────────────────────────────────────────────────
+   Problem: hover:-translate-y-* moves the element; if cursor was at the bottom
+   border, element moves away → hover lost → snaps back → cursor re-enters →
+   oscillation. Fix: 60ms delay on hover-OFF so element doesn't snap back
+   before cursor naturally moves away. Hover-ON stays instant (0ms delay).
+   ────────────────────────────────────────────────────────────────────────── */
+.hover\:-translate-y-0\.5,
+.hover\:-translate-y-1,
+.hover\:-translate-y-px,
+.hover\:-translate-y-2 {
+  transition-delay: 60ms;
+}
+.hover\:-translate-y-0\.5:hover,
+.hover\:-translate-y-1:hover,
+.hover\:-translate-y-px:hover,
+.hover\:-translate-y-2:hover {
+  transition-delay: 0ms;
+}
+
+
