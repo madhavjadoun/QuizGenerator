@@ -55,7 +55,9 @@ const QuizCard = React.memo(function QuizCard({
   const attempt = parseAttempt(quiz.status, fallbackTitle);
 
   return (
-    <div className="border border-[var(--border)] bg-[var(--surface)] rounded-xl p-4 flex flex-col justify-between min-h-[190px] hover:-translate-y-0.5 hover:shadow-md hover:border-[var(--border-strong)] transition-all duration-300 min-w-0 overflow-hidden">
+    <div className="relative group min-w-0">
+      {/* Inner visual layer: only this moves — outer hit area stays fixed, preventing hover jitter */}
+      <div className="border border-[var(--border)] bg-[var(--surface)] rounded-xl p-4 flex flex-col justify-between min-h-[190px] group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:border-[var(--border-strong)] transition-all duration-300 min-w-0 overflow-hidden">
       <div className="space-y-3 min-w-0">
         {/* Header Row */}
         <div className="flex justify-between items-start gap-3 min-w-0">
@@ -197,6 +199,7 @@ const QuizCard = React.memo(function QuizCard({
             </svg>
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

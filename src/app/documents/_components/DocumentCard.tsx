@@ -32,8 +32,10 @@ const DocumentCard = React.memo(function DocumentCard({
 }: DocumentCardProps) {
   return (
     <div
-      className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 sm:px-6 py-4 flex flex-col justify-between lg:h-[148px] relative group hover:-translate-y-0.5 hover:shadow-md hover:border-[var(--border-strong)] transition-all duration-300 min-w-0 overflow-hidden"
+      className="relative group min-w-0"
     >
+      {/* Inner visual layer: only this moves — outer hit area stays fixed, preventing hover jitter */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 sm:px-6 py-4 flex flex-col justify-between lg:h-[148px] relative overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:border-[var(--border-strong)] min-w-0">
       {/* Top Row: Ext badge, Filename, Synced status */}
       <div className="space-y-3 sm:space-y-4 min-w-0">
         <div className="flex items-start sm:items-center justify-between gap-2 sm:gap-3 min-w-0">
@@ -95,6 +97,7 @@ const DocumentCard = React.memo(function DocumentCard({
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
+      </div>
       </div>
     </div>
   );
