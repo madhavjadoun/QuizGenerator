@@ -195,10 +195,11 @@ export default function AppShell({ children, title, subtitle, action, publicPage
   const userInitials = userName.slice(0, 2).toUpperCase();
   const userAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
+  const handleSignOut = () => {
     router.push("/");
+    supabase.auth.signOut(); // fire-and-forget — redirect is instant
   };
+
 
   /* ── Sidebar content ── */
   const SidebarContent = () => (

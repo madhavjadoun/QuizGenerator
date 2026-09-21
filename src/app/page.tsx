@@ -534,16 +534,7 @@ export default function WelcomePage() {
               </div>
             </motion.div>
 
-            {/* Arrow 1 — desktop only */}
-            <motion.div
-              className="hidden lg:block flex-shrink-0"
-              animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8], filter: ["drop-shadow(0 0 0px transparent)", "drop-shadow(0 0 8px var(--text-1))", "drop-shadow(0 0 0px transparent)"] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0 }}
-            >
-              <svg className="w-7 h-7 text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </motion.div>
+
 
             {/* Card 2 */}
             <motion.div
@@ -559,16 +550,7 @@ export default function WelcomePage() {
               </div>
             </motion.div>
 
-            {/* Arrow 2 — desktop only */}
-            <motion.div
-              className="hidden lg:block flex-shrink-0"
-              animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8], filter: ["drop-shadow(0 0 0px transparent)", "drop-shadow(0 0 8px var(--text-1))", "drop-shadow(0 0 0px transparent)"] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            >
-              <svg className="w-7 h-7 text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </motion.div>
+
 
             {/* Card 3 */}
             <motion.div
@@ -584,16 +566,7 @@ export default function WelcomePage() {
               </div>
             </motion.div>
 
-            {/* Arrow 3 — desktop only */}
-            <motion.div
-              className="hidden lg:block flex-shrink-0"
-              animate={{ opacity: [0.2, 1, 0.2], scale: [0.8, 1.2, 0.8], filter: ["drop-shadow(0 0 0px transparent)", "drop-shadow(0 0 8px var(--text-1))", "drop-shadow(0 0 0px transparent)"] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 1.6 }}
-            >
-              <svg className="w-7 h-7 text-[var(--text-1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </motion.div>
+
 
             {/* Card 4 */}
             <motion.div
