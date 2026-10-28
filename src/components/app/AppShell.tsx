@@ -207,7 +207,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
 
       {/* Brand */}
       {/* Sidebar Header */}
-      <div className="flex items-center justify-between gap-2.5 p-4 border-b border-[var(--border)] bg-[var(--surface)]">
+      <div className="flex items-center justify-between gap-2.5 px-4 border-b border-[var(--border)] bg-[var(--surface)] h-[56px] flex-shrink-0">
         <NavbarLogo />
         <div className="hidden md:block">
           <SidebarToggle isOpen={sidebarOpen} onClick={handleToggle} />
@@ -265,7 +265,7 @@ export default function AppShell({ children, title, subtitle, action, publicPage
           className="glass-sidebar hidden md:flex flex-col flex-shrink-0 z-10 border-r border-[var(--border)] overflow-hidden"
           style={{ width: "240px", height: "100vh" }}
         >
-          <div className="p-4 border-b border-[var(--border)] flex items-center gap-2">
+          <div className="px-4 h-[56px] border-b border-[var(--border)] flex items-center gap-2">
             <Skeleton className="h-6 w-6 rounded-md" />
             <Skeleton className="h-4.5 w-24 rounded-lg" />
           </div>

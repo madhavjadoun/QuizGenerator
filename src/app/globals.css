@@ -21,49 +21,49 @@
    Premium Slate / Neutral Workspace
    ══════════════════════════════════════ */
 :root {
-  --bg:            #FAFBFC; /* soft off-white background */
-  --bg-2:          #F3F4F6; /* subtle hover background */
-  --bg-3:          #E5E7EB; /* border/line gray */
-  --surface:       rgba(255, 255, 255, 0.7); /* translucent cards */
-  --surface-2:     #FAFBFC; /* solid surface fallback */
-  --surface-3:     #F3F4F6;
+  --bg:            #F7F5F1; /* Shell */
+  --bg-2:          #EDE9E2; /* between Shell and Stone — hover */
+  --bg-3:          #E0DCD1; /* Stone */
+  --surface:       rgba(247, 245, 241, 0.78); /* Shell translucent cards */
+  --surface-2:     rgba(243, 240, 234, 0.88); /* slightly denser Shell */
+  --surface-3:     #E0DCD1; /* Stone */
 
-  --text-1:        #0F172A; /* Slate 900 - Headings */
-  --text-2:        #334155; /* Slate 700 - Labels & secondary */
-  --text-3:        #475569; /* Slate 600 - Descriptions */
-  --text-4:        #64748B; /* Slate 500 - Captions & metadata */
-  --text-inv:      #FFFFFF;
+  --text-1:        #344945; /* Viridian — Headings */
+  --text-2:        #3f5852; /* Viridian mid — Labels */
+  --text-3:        #556b65; /* Viridian soft — Descriptions */
+  --text-4:        #718f88; /* Viridian muted — Captions */
+  --text-inv:      #F7F5F1; /* Shell on dark surfaces */
 
-  --indigo:        #0F172A; /* Slate 900 Primary accent */
-  --indigo-accent: #0d9488; /* Premium Teal accent for highlights */
-  --violet:        #334155;
-  --cyan:          #64748B;
+  --indigo:        #344945; /* Viridian — primary button bg */
+  --indigo-accent: #344945; /* Viridian — accent highlights */
+  --violet:        #3f5852; /* slightly lighter Viridian for hover */
+  --cyan:          #718f88; /* soft Viridian for muted elements */
 
   --glow-indigo:   transparent;
   --glow-violet:   transparent;
   --glow-cyan:     transparent;
 
-  --border:        #E2E8F0; /* clean thin border */
-  --border-strong: #CBD5E1;
-  --border-accent: #0F172A;
+  --border:        #E0DCD1; /* Stone */
+  --border-strong: #C8C2B6; /* darker Stone */
+  --border-accent: #344945; /* Viridian */
 
-  --background:    #FAFBFC;
-  --foreground:    #0F172A;
-  --card-border:   #E2E8F0;
+  --background:    #F7F5F1; /* Shell */
+  --foreground:    #344945; /* Viridian */
+  --card-border:   #E0DCD1; /* Stone */
 
-  --shadow-xs:     0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm:     0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md:     0 4px 6px -1px rgba(15, 23, 42, 0.03), 0 2px 4px -1px rgba(15, 23, 42, 0.02);
-  --shadow-lg:     0 10px 15px -3px rgba(15, 23, 42, 0.03), 0 4px 6px -2px rgba(15, 23, 42, 0.02);
+  --shadow-xs:     0 1px 2px rgba(52, 73, 69, 0.05);
+  --shadow-sm:     0 1px 3px rgba(52, 73, 69, 0.06);
+  --shadow-md:     0 4px 8px rgba(52, 73, 69, 0.05), 0 2px 4px rgba(52, 73, 69, 0.03);
+  --shadow-lg:     0 10px 20px rgba(52, 73, 69, 0.06), 0 4px 8px rgba(52, 73, 69, 0.03);
   --shadow-glow:   none;
 
-  /* Atmospheric gradient blobs (felt, not noticed) */
-  --gradient-blob-1: #E9EEFF; /* Periwinkle */
-  --gradient-blob-2: #DDF7F5; /* Ocean Mist */
-  --gradient-blob-3: #FFF1E6; /* Peach Glow */
+  /* Palette gradient blobs */
+  --gradient-blob-1: #D5E3E8; /* Sky */
+  --gradient-blob-2: #E4E3BC; /* Honeydew */
+  --gradient-blob-3: #E0DCD1; /* Stone */
 
-  --logo-bg:       #0F172A;
-  --logo-shadow:   0 1px 2px rgba(15, 23, 42, 0.08);
+  --logo-bg:       #344945; /* Viridian */
+  --logo-shadow:   0 1px 2px rgba(52, 73, 69, 0.10);
 
   color-scheme: light;
 }
@@ -128,10 +128,10 @@
    ══════════════════════════════════════ */
 .app-bg {
   background:
-    radial-gradient(ellipse at 0% 0%,   #c8e6f5 0%, transparent 55%),
-    radial-gradient(ellipse at 100% 0%, #d6eef8 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, #e8f4fb 0%, transparent 60%),
-    #f4f9fc;
+    radial-gradient(ellipse at 0% 0%,   #D5E3E8 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 0%, #E4E3BC 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, #E0DCD1 0%, transparent 55%),
+    #F7F5F1;
   position: relative;
 }
 
@@ -359,17 +359,21 @@ p { color: var(--text-3); line-height: 1.65; }
    Solid border layouts
    ══════════════════════════════════════ */
 .glass-sidebar {
-  background: var(--bg);
+  background: rgba(247, 245, 241, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-right: 1px solid var(--border);
 }
 
 .glass-nav {
-  background: var(--surface);
+  background: rgba(243, 240, 234, 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
 }
 
 .glass-card {
-  background: var(--surface);
+  background: rgba(247, 245, 241, 0.78);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xs);
   transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
