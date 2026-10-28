@@ -175,7 +175,7 @@ const QuizCard = React.memo(function QuizCard({
           <button
             onClick={() => onDownloadClick(quiz)}
             disabled={!attempt.completed}
-            className="p-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg-2)] text-[var(--text-2)] transition-colors cursor-pointer disabled:opacity-30 group relative w-8 h-8 flex items-center justify-center"
+            className="p-1.5 rounded-xl border border-[var(--border)] hover:bg-[var(--bg-2)] text-[var(--text-2)] transition-colors cursor-pointer disabled:opacity-30 group/dl relative w-8 h-8 flex items-center justify-center"
             title="Download PDF Report"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -183,7 +183,7 @@ const QuizCard = React.memo(function QuizCard({
             </svg>
 
             {/* Custom Tooltip */}
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-zinc-900 text-[10px] text-white rounded font-bold opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow">
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-zinc-900 text-[10px] text-white rounded font-bold opacity-0 pointer-events-none group-hover/dl:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 shadow">
               Download Report
             </span>
           </button>
