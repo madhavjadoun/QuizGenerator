@@ -127,7 +127,11 @@
    BASE RESET & TYPOGRAPHY
    ══════════════════════════════════════ */
 .app-bg {
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse at 0% 0%,   #c8e6f5 0%, transparent 55%),
+    radial-gradient(ellipse at 100% 0%, #d6eef8 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, #e8f4fb 0%, transparent 60%),
+    #f4f9fc;
   position: relative;
 }
 
