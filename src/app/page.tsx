@@ -257,7 +257,7 @@ export default function WelcomePage() {
                   delay={25}
                   className="mr-2"
                 />
-                <span className="relative inline-block overflow-hidden h-[1.2em] whitespace-nowrap align-bottom text-[var(--indigo-accent)]">
+                <span className="relative inline-block overflow-hidden h-[1.2em] whitespace-nowrap align-bottom" style={{ color: "#4a7c74" }}>
                   <AnimatePresence mode="popLayout">
                     <motion.span
                       key={wordIndex}
@@ -283,7 +283,7 @@ export default function WelcomePage() {
                             style={{
                               display: "inline-block",
                               whiteSpace: "pre",
-                              color: "var(--indigo-accent)",
+                              color: "#4a7c74",
                               willChange: "transform, opacity, filter"
                             }}
                           >
@@ -592,7 +592,7 @@ export default function WelcomePage() {
               {/* Column 1: Logo & Brand Description */}
               <div className="md:col-span-6 space-y-3">
                 <span className="font-serif text-3xl font-bold tracking-tight text-[var(--text-1)] select-none">
-                  Quiz<span style={{ color: '#0d9488' }}>Gens</span>
+                  Quiz<span style={{ color: '#4a7c74' }}>Gens</span>
                 </span>
                 <p className="text-xs text-[var(--text-3)] font-normal leading-relaxed max-w-[280px]">
                   © {new Date().getFullYear()} QuizGens. Dedicated to the pursuit of knowledge.
